@@ -93,13 +93,7 @@ const AdminLogin = () => {
           </button>
         </form>
 
-        <div className="mt-6 p-4 bg-[#FDFBF7] rounded-lg">
-          <p className="text-sm text-gray-600">
-            <strong>{t('Default Credentials:', 'डीफॉल्ट क्रेडेंशियल:')}</strong>
-          </p>
-          <p className="text-sm text-gray-600 mt-1">Om Admin: om_admin / om123</p>
-          <p className="text-sm text-gray-600">Shiv Admin: shiv_admin / shiv123</p>
-        </div>
+
 
         <button
           onClick={() => navigate('/')}
