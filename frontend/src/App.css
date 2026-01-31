@@ -1,0 +1,76 @@
+.App {
+  min-height: 100vh;
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, #FDFBF7 0%, #FFF5E6 100%);
+}
+
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px -10px rgba(128, 0, 0, 0.2);
+}
+
+.btn-primary {
+  background-color: #800000;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #600000;
+  transform: scale(1.05);
+}
+
+.btn-secondary {
+  border: 2px solid #D4AF37;
+  color: #800000;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #D4AF37;
+  color: white;
+}
+
+.gold-accent {
+  color: #D4AF37;
+}
+
+.maroon-text {
+  color: #800000;
+}
+
+.cream-bg {
+  background-color: #FDFBF7;
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.admin-sidebar {
+  background: linear-gradient(180deg, #800000 0%, #600000 100%);
+}
+
+.date-available {
+  background-color: #D4AF37;
+  color: white;
+}
+
+.date-booked {
+  background-color: #EF4444;
+  color: white;
+}
+
+.date-shubh {
+  border: 2px solid #D4AF37;
+  font-weight: bold;
+}
