@@ -26,10 +26,11 @@
     .react-datepicker__day-name,
     .react-datepicker__day,
     .react-datepicker__time-name {
-        width: 3.5rem !important;
-        /* Reduced from 4rem to fit better */
-        line-height: 3.5rem !important;
-        font-size: 1rem !important;
+        width: 2.8rem !important;
+        /* Further reduced to prevent overflow */
+        line-height: 2.8rem !important;
+        font-size: 0.95rem !important;
+        margin: 0.166rem !important;
     }
 }
 

@@ -128,20 +128,22 @@ const DateBookingPage = () => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-lg">
-              <h3 className="playfair text-2xl font-bold maroon-text mb-4 flex items-center gap-2">
-                <Calendar size={24} />
-                {t('Calendar', 'कॅलेंडर')}
-              </h3>
-              <DatePicker
-                selected={selectedDate}
-                onChange={(date) => setSelectedDate(date)}
-                inline
-                dayClassName={getDayClassName}
-                minDate={new Date()} /* Keep restriction for booking, but maybe visual was the issue? User said "No option to go back". */
-                showDisabledMonthNavigation
-                data-testid="date-picker"
-              />
+            <div className="bg-white p-5 rounded-2xl shadow-lg flex justify-center items-start">
+              <div className="w-full">
+                <h3 className="playfair text-2xl font-bold maroon-text mb-4 flex items-center gap-2">
+                  <Calendar size={24} />
+                  {t('Calendar', 'कॅलेंडर')}
+                </h3>
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date) => setSelectedDate(date)}
+                  inline
+                  dayClassName={getDayClassName}
+                  minDate={new Date(new Date().setFullYear(new Date().getFullYear() - 1))} /* Allow looking back 1 year */
+                  showDisabledMonthNavigation
+                  data-testid="date-picker"
+                />
+              </div>
             </div>
 
             <div className="space-y-6">
