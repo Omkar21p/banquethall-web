@@ -530,4 +530,6 @@ const AdminCalendar = () => {
       </div>
     </AdminLayout>
   );
-  export default AdminCalendar;
+};
+
+export default AdminCalendar;
