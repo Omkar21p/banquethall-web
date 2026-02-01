@@ -92,20 +92,7 @@ const AdminSettings = () => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                {t('Theme', 'थीम')}
-              </label>
-              <select
-                value={settings.theme}
-                onChange={(e) => setSettings({ ...settings, theme: e.target.value })}
-                className="w-full px-4 py-2 border-2 border-[#D4AF37] rounded-lg focus:outline-none"
-                data-testid="theme-setting"
-              >
-                <option value="light">{t('Light', 'लाइट')}</option>
-                <option value="dark">{t('Dark', 'डार्क')}</option>
-              </select>
-            </div>
+
 
             <div className="flex items-center gap-3">
               <input

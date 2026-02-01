@@ -86,10 +86,10 @@ const OlderBookings = () => {
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
-    
+
     doc.setFontSize(18);
     doc.text('Bills Report', 14, 20);
-    
+
     const tableData = filteredBills.map(bill => [
       bill.customer_name,
       bill.event_date,
@@ -196,9 +196,8 @@ const OlderBookings = () => {
                       <td className="px-6 py-4 text-right font-semibold">₹{bill.total_amount.toLocaleString()}</td>
                       <td className="px-6 py-4 text-right">
                         <span
-                          className={`font-semibold ${
-                            bill.balance_due > 0 ? 'text-red-600' : 'text-green-600'
-                          }`}
+                          className={`font-semibold ${bill.balance_due > 0 ? 'text-red-600' : 'text-green-600'
+                            }`}
                         >
                           ₹{bill.balance_due.toLocaleString()}
                         </span>
@@ -320,18 +319,27 @@ const OlderBookings = () => {
                 </div>
               </div>
 
-              <button
-                onClick={() => setSelectedBill(null)}
-                className="mt-6 w-full py-3 bg-[#800000] text-white rounded-full hover:bg-[#600000] transition-all"
-                data-testid="close-modal-btn"
-              >
-                {t('Close', 'बंद करा')}
-              </button>
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={() => window.print()}
+                  className="flex-1 py-3 border-2 border-[#800000] text-[#800000] rounded-full hover:bg-gray-50 transition-all"
+                  data-testid="print-bill-btn"
+                >
+                  {t('Print', 'प्रिंट')}
+                </button>
+                <button
+                  onClick={() => setSelectedBill(null)}
+                  className="flex-1 py-3 bg-[#800000] text-white rounded-full hover:bg-[#600000] transition-all"
+                  data-testid="close-modal-btn"
+                >
+                  {t('Close', 'बंद करा')}
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
-    </AdminLayout>
+    </AdminLayout >
   );
 };
 

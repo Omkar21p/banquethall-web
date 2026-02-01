@@ -34,7 +34,7 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/packages', icon: Package, label: t('Packages', 'पॅकेजेस') },
     { path: '/admin/calendar', icon: Calendar, label: t('Calendar', 'कॅलेंडर') },
     { path: '/admin/bills/new', icon: FileText, label: t('New Bill', 'नविन बिल') },
-    { path: '/admin/bills', icon: FolderOpen, label: t('Older Bookings', 'जुनी बुकिंग') },
+    { path: '/admin/bills', icon: FolderOpen, label: t('Records', 'रेकॉर्ड्स') },
     { path: '/admin/users', icon: Users, label: t('Manage Admins', 'प्रशासक व्यवस्थापन') },
     { path: '/admin/settings', icon: Settings, label: t('Settings', 'सेटिंग्ज') },
   ];
@@ -60,9 +60,8 @@ const AdminLayout = ({ children }) => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-6 py-3 transition-colors ${
-                  isActive ? 'bg-[#600000] border-l-4 border-[#D4AF37]' : 'hover:bg-[#600000]'
-                }`}
+                className={`flex items-center gap-3 px-6 py-3 transition-colors ${isActive ? 'bg-[#600000] border-l-4 border-[#D4AF37]' : 'hover:bg-[#600000]'
+                  }`}
                 data-testid={`menu-${item.path}`}
               >
                 <Icon size={20} />

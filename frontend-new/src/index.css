@@ -2,6 +2,36 @@
 
 @tailwind base;
 @tailwind components;
+
+.react-datepicker {
+    width: 100% !important;
+    border: none !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+.react-datepicker__month-container {
+    width: 100% !important;
+}
+
+.react-datepicker__day-name,
+.react-datepicker__day,
+.react-datepicker__time-name {
+    width: 3rem !important;
+    line-height: 3rem !important;
+    margin: 0.2rem !important;
+}
+
+@media (min-width: 768px) {
+
+    .react-datepicker__day-name,
+    .react-datepicker__day,
+    .react-datepicker__time-name {
+        width: 4rem !important;
+        line-height: 4rem !important;
+        font-size: 1.1rem !important;
+    }
+}
+
 @tailwind utilities;
 
 body {
@@ -53,6 +83,7 @@ code {
     * {
         @apply border-border;
     }
+
     body {
         @apply bg-background text-foreground;
     }

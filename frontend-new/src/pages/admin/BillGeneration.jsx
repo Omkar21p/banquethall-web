@@ -30,14 +30,18 @@ const BillGeneration = () => {
     event_type: 'लग्न',
     services: [],
     thali_items: [],
+    thali_price_per_plate: '',
+    thali_total_plates: '',
     hall_rent: '',
+    show_hall_rent: true,
     custom_charges: [],
     discount: '0',
     pre_booking_amount: '0',
     total_amount: 0,
     balance_due: 0,
     manual_total: false,
-    manual_balance: false
+    manual_balance: false,
+    customized: false
   });
 
   useEffect(() => {
@@ -59,7 +63,10 @@ const BillGeneration = () => {
   }, [
     billData.services,
     billData.thali_items,
+    billData.thali_price_per_plate,
+    billData.thali_total_plates,
     billData.hall_rent,
+    billData.show_hall_rent,
     billData.custom_charges,
     billData.discount,
     billData.pre_booking_amount
@@ -74,6 +81,22 @@ const BillGeneration = () => {
     }
   };
 
+  const [bookings, setBookings] = useState([]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [billData.hall_id]);
+
+  const fetchBookings = async () => {
+    if (!billData.hall_id) return;
+    try {
+      const response = await axios.get(`${API}/bookings?hall_id=${billData.hall_id}`);
+      setBookings(response.data);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    }
+  };
+
   const fetchServices = async () => {
     try {
       const response = await axios.get(`${API}/services?hall_id=${billData.hall_id}`);
@@ -83,23 +106,39 @@ const BillGeneration = () => {
     }
   };
 
+  const handleBookingSelect = (bookingId) => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return;
+
+    setBillData(prev => ({
+      ...prev,
+      customer_name: booking.customer_name,
+      customer_city: booking.customer_city,
+      customer_phone: booking.customer_phone,
+      booking_date: booking.booking_date ? new Date(booking.booking_date).toISOString().split('T')[0] : '',
+      event_date: booking.date,
+      event_type: booking.event_type,
+      num_guests: booking.num_guests
+    }));
+  };
+
   const calculateTotal = () => {
     // Skip auto calculation if manual override is enabled
     if (billData.manual_total && billData.manual_balance) return;
-    
+
     const servicesTotal = billData.services.reduce(
       (sum, s) => sum + (s.price * s.quantity),
       0
     );
-    const thaliTotal = billData.thali_items.reduce(
-      (sum, t) => sum + (t.rate * t.quantity),
-      0
-    );
+    // Thali calculation: Price per plate * Total plates
+    const thaliTotal = (parseInt(billData.thali_price_per_plate) || 0) * (parseInt(billData.thali_total_plates) || 0);
+
     const customChargesTotal = billData.custom_charges.reduce(
       (sum, c) => sum + (parseInt(c.amount) || 0),
       0
     );
-    const hallRent = parseInt(billData.hall_rent) || 0;
+    // Only add hall rent if show_hall_rent is true
+    const hallRent = billData.show_hall_rent ? (parseInt(billData.hall_rent) || 0) : 0;
     const discount = parseInt(billData.discount) || 0;
     const preBooking = parseInt(billData.pre_booking_amount) || 0;
 
@@ -195,11 +234,11 @@ const BillGeneration = () => {
     const element = billPreviewRef.current;
     const canvas = await html2canvas(element, { scale: 2 });
     const imgData = canvas.toDataURL('image/png');
-    
+
     const pdf = new jsPDF('p', 'mm', 'a4');
     const imgWidth = 210;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    
+
     pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
     pdf.save(`bill-${billData.customer_name}-${billData.event_date}.pdf`);
     toast.success(t('PDF downloaded!', 'PDF डाऊनलोड झाले!'));
@@ -214,7 +253,7 @@ const BillGeneration = () => {
   const BillPreview = () => {
     const lang = billLanguage;
     const t_bill = (en, mr) => (lang === 'en' ? en : mr);
-    
+
     const selectedHallData = halls.find(h => h.id === billData.hall_id);
 
     return (
@@ -253,12 +292,41 @@ const BillGeneration = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="border p-2">{t_bill('Hall Rent', 'हॉल भाडे')}</td>
-                <td className="border p-2 text-right">1</td>
-                <td className="border p-2 text-right">₹{parseInt(billData.hall_rent || 0).toLocaleString()}</td>
-                <td className="border p-2 text-right">₹{parseInt(billData.hall_rent || 0).toLocaleString()}</td>
-              </tr>
+              {/* Hall Rent - Conditional */}
+              {billData.show_hall_rent && (
+                <tr>
+                  <td className="border p-2">{t_bill('Hall Rent', 'हॉल भाडे')}</td>
+                  <td className="border p-2 text-right">1</td>
+                  <td className="border p-2 text-right">₹{parseInt(billData.hall_rent || 0).toLocaleString()}</td>
+                  <td className="border p-2 text-right">₹{parseInt(billData.hall_rent || 0).toLocaleString()}</td>
+                </tr>
+              )}
+
+              {/* Thali Package */}
+              {(parseInt(billData.thali_price_per_plate) > 0 || parseInt(billData.thali_total_plates) > 0) && (
+                <>
+                  <tr>
+                    <td className="border p-2 font-bold bg-gray-50" colSpan={4}>
+                      {t_bill('Thali Package', 'थाळी पॅकेज')}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border p-2 pl-4">
+                      {t_bill('Price per plate', 'किंमत प्रति ताट')}
+                      {billData.thali_items.length > 0 && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {t_bill('Includes: ', 'समाविष्ट: ')}
+                          {billData.thali_items.map(item => (lang === 'en' ? item.name : item.name_mr)).join(', ')}
+                        </div>
+                      )}
+                    </td>
+                    <td className="border p-2 text-right">{billData.thali_total_plates}</td>
+                    <td className="border p-2 text-right">₹{parseInt(billData.thali_price_per_plate).toLocaleString()}</td>
+                    <td className="border p-2 text-right">₹{((parseInt(billData.thali_price_per_plate) || 0) * (parseInt(billData.thali_total_plates) || 0)).toLocaleString()}</td>
+                  </tr>
+                </>
+              )}
+
               {billData.custom_charges.map((charge, idx) => (
                 <tr key={idx}>
                   <td className="border p-2">{lang === 'en' ? charge.label : charge.label_mr}</td>
@@ -273,14 +341,6 @@ const BillGeneration = () => {
                   <td className="border p-2 text-right">{service.quantity}</td>
                   <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
                   <td className="border p-2 text-right">₹{(service.price * service.quantity).toLocaleString()}</td>
-                </tr>
-              ))}
-              {billData.thali_items.map((item, idx) => (
-                <tr key={idx}>
-                  <td className="border p-2">{lang === 'en' ? item.name : item.name_mr}</td>
-                  <td className="border p-2 text-right">{item.quantity}</td>
-                  <td className="border p-2 text-right">₹{parseInt(item.rate).toLocaleString()}</td>
-                  <td className="border p-2 text-right">₹{(item.rate * item.quantity).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -299,6 +359,18 @@ const BillGeneration = () => {
             </p>
           </div>
         </div>
+
+        {/* Customization Controls for Preview */}
+        {showPreview && (
+          <div className="mt-4 p-4 text-center">
+            <button
+              onClick={() => setBillData(prev => ({ ...prev, show_hall_rent: !prev.show_hall_rent }))}
+              className={`px-4 py-2 rounded-lg text-sm mr-4 border ${billData.show_hall_rent ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500'}`}
+            >
+              {billData.show_hall_rent ? t('Hide Hall Rent', 'हॉल भाडे लपवा') : t('Show Hall Rent', 'हॉल भाडे दाखवा')}
+            </button>
+          </div>
+        )}
       </div>
     );
   };
@@ -323,6 +395,24 @@ const BillGeneration = () => {
                     <option key={hall.id} value={hall.id}>{language === 'en' ? hall.name : hall.name_mr}</option>
                   ))}
                 </select>
+
+                {/* Booking Selection */}
+                {billData.hall_id && (
+                  <div className="mt-2">
+                    <label className="block text-xs text-gray-500 mb-1">{t('Select from Bookings (Optional)', 'बुकिंगमधून निवडा (पर्यायी)')}</label>
+                    <select
+                      onChange={(e) => handleBookingSelect(e.target.value)}
+                      className="w-full px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none"
+                    >
+                      <option value="">{t('No booking selected', 'बुकिंग निवडलेले नाही')}</option>
+                      {bookings.filter(b => b.hall_id === billData.hall_id).map(booking => (
+                        <option key={booking.id} value={booking.id}>
+                          {booking.customer_name} - {booking.date}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-2">{t('Customer Name', 'ग्राहक नाव')}</label>
@@ -534,56 +624,65 @@ const BillGeneration = () => {
               )}
             </div>
 
-            <div className="mt-6">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="playfair text-xl font-bold maroon-text">{t('Thali Items', 'थाळी आयटम')}</h3>
-                <button
-                  onClick={addThaliItem}
-                  className="px-4 py-2 bg-[#D4AF37] text-white rounded-lg hover:bg-[#B8941F]"
-                  data-testid="add-thali-item-btn"
-                >
-                  {t('Add Thali Item', 'थाळी आयटम जोडा')}
-                </button>
+            <div className="mt-6 border-t pt-4">
+              <h3 className="playfair text-xl font-bold maroon-text mb-3">{t('Thali Package', 'थाळी पॅकेज')}</h3>
+
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">{t('Price per plate', 'किंमत प्रति ताट')}</label>
+                  <input
+                    type="number"
+                    value={billData.thali_price_per_plate}
+                    onChange={(e) => setBillData({ ...billData, thali_price_per_plate: e.target.value })}
+                    className="w-full px-4 py-2 border rounded-lg"
+                    placeholder="Rate"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">{t('Total plates', 'एकूण ताटे')}</label>
+                  <input
+                    type="number"
+                    value={billData.thali_total_plates}
+                    onChange={(e) => setBillData({ ...billData, thali_total_plates: e.target.value })}
+                    className="w-full px-4 py-2 border rounded-lg"
+                    placeholder="Quantity"
+                  />
+                </div>
               </div>
 
-              {billData.thali_items.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-5 gap-2 mb-2">
-                  <input
-                    type="text"
-                    placeholder={t('Name (English)', 'नाव (इंग्रजी)')}
-                    value={item.name}
-                    onChange={(e) => updateThaliItem(idx, 'name', e.target.value)}
-                    className="px-2 py-1 border rounded"
-                  />
-                  <input
-                    type="text"
-                    placeholder={t('Name (Marathi)', 'नाव (मराठी)')}
-                    value={item.name_mr}
-                    onChange={(e) => updateThaliItem(idx, 'name_mr', e.target.value)}
-                    className="px-2 py-1 border rounded marathi-text"
-                  />
-                  <input
-                    type="number"
-                    placeholder={t('Quantity', 'प्रमाण')}
-                    value={item.quantity}
-                    onChange={(e) => updateThaliItem(idx, 'quantity', parseInt(e.target.value) || 1)}
-                    className="px-2 py-1 border rounded"
-                  />
-                  <input
-                    type="number"
-                    placeholder={t('Rate', 'दर')}
-                    value={item.rate}
-                    onChange={(e) => updateThaliItem(idx, 'rate', parseInt(e.target.value) || 0)}
-                    className="px-2 py-1 border rounded"
-                  />
-                  <button
-                    onClick={() => removeThaliItem(idx)}
-                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    {t('Remove', 'काढा')}
-                  </button>
-                </div>
-              ))}
+              <div className="mb-4">
+                <p className="font-semibold mb-2">{t('Package Sub-items / Menu', 'मेनू आयटम')}</p>
+                {billData.thali_items.map((item, idx) => (
+                  <div key={idx} className="grid grid-cols-5 gap-2 mb-2">
+                    <input
+                      type="text"
+                      placeholder={t('Name (English)', 'नाव (इंग्रजी)')}
+                      value={item.name}
+                      onChange={(e) => updateThaliItem(idx, 'name', e.target.value)}
+                      className="px-2 py-1 border rounded col-span-2"
+                    />
+                    <input
+                      type="text"
+                      placeholder={t('Name (Marathi)', 'नाव (मराठी)')}
+                      value={item.name_mr}
+                      onChange={(e) => updateThaliItem(idx, 'name_mr', e.target.value)}
+                      className="px-2 py-1 border rounded marathi-text col-span-2"
+                    />
+                    <button
+                      onClick={() => removeThaliItem(idx)}
+                      className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      {t('Remove', 'काढा')}
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={addThaliItem}
+                  className="px-3 py-1 bg-[#D4AF37] text-white rounded-lg text-sm hover:bg-[#B8941F]"
+                >
+                  + {t('Add Menu Item', 'मेनू आयटम जोडा')}
+                </button>
+              </div>
             </div>
 
             <div className="mt-6 p-4 bg-[#FDFBF7] rounded-lg">

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import axios from 'axios';
-import { Plus, Trash2, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import DatePicker from 'react-datepicker';
 import { format } from 'date-fns';
@@ -13,6 +14,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const AdminCalendar = () => {
+  const navigate = useNavigate();
   const { getAuthHeaders } = useAuth();
   const { language, t } = useLanguage();
   const [halls, setHalls] = useState([]);
@@ -21,6 +23,7 @@ const AdminCalendar = () => {
   const [bookings, setBookings] = useState([]);
   const [showAddShubh, setShowAddShubh] = useState(false);
   const [showAddBooking, setShowAddBooking] = useState(false);
+  const [showPastBookings, setShowPastBookings] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [shubhForm, setShubhForm] = useState({
@@ -216,6 +219,13 @@ const AdminCalendar = () => {
               {t('Add Shubh Date', 'शुभ तारीख जोडा')}
             </button>
             <button
+              onClick={() => navigate('/admin/bills')}
+              className="flex items-center gap-2 px-4 py-2 border-2 border-[#800000] text-[#800000] rounded-full hover:bg-gray-50 transition-all"
+            >
+              <FileText size={20} />
+              {t('View Records', 'रेकॉर्ड्स पहा')}
+            </button>
+            <button
               onClick={() => setShowAddBooking(true)}
               className="flex items-center gap-2 px-4 py-2 bg-[#800000] text-white rounded-full hover:bg-[#600000] transition-all"
               data-testid="add-booking-btn"
@@ -327,6 +337,16 @@ const AdminCalendar = () => {
                 />
               </div>
               <div>
+                <label className="block text-sm font-semibold mb-1">{t('Date of Booking', 'बुकिंग केल्याची तारीख')}</label>
+                <input
+                  type="date"
+                  value={bookingForm.booking_date || ''}
+                  onChange={(e) => setBookingForm({ ...bookingForm, booking_date: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  data-testid="booking-date-timestamp-input"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-semibold mb-1">{t('Phone', 'फोन')}</label>
                 <input
                   type="tel"
@@ -398,7 +418,7 @@ const AdminCalendar = () => {
         )}
 
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-md">
+          <div className="bg-white p-6 rounded-xl shadow-md calendar-container">
             <h3 className="playfair text-xl font-bold maroon-text mb-4">{t('Calendar', 'कॅलेंडर')}</h3>
             <DatePicker
               selected={selectedDate}
@@ -406,6 +426,7 @@ const AdminCalendar = () => {
               inline
               dayClassName={getDayClassName}
               minDate={new Date()}
+              calendarClassName="w-full text-lg"
             />
           </div>
 
@@ -437,11 +458,11 @@ const AdminCalendar = () => {
 
             <div className="bg-white p-6 rounded-xl shadow-md">
               <h3 className="playfair text-xl font-bold maroon-text mb-4">
-                {t('Bookings', 'बुकिंग')}
+                {t('Upcoming Bookings', 'येणारी बुकिंग')}
               </h3>
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {bookings.map((booking) => (
-                  <div key={booking.id} className="p-3 bg-[#FDFBF7] rounded-lg" data-testid={`booking-${booking.id}`}>
+                {bookings.filter(b => new Date(b.date) >= new Date().setHours(0, 0, 0, 0)).sort((a, b) => new Date(a.date) - new Date(b.date)).map((booking) => (
+                  <div key={booking.id} className="p-3 bg-[#FDFBF7] rounded-lg border-l-4 border-green-500" data-testid={`booking-${booking.id}`}>
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-semibold">{booking.customer_name}</p>
@@ -467,13 +488,46 @@ const AdminCalendar = () => {
                     </div>
                   </div>
                 ))}
+                {bookings.filter(b => new Date(b.date) >= new Date().setHours(0, 0, 0, 0)).length === 0 && (
+                  <p className="text-gray-500 text-sm italic">{t('No upcoming bookings.', 'कोणतेही आगामी बुकिंग नाही.')}</p>
+                )}
               </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <button
+                onClick={() => setShowPastBookings(!showPastBookings)}
+                className="w-full flex justify-between items-center playfair text-xl font-bold maroon-text mb-2 focus:outline-none"
+              >
+                <span>{t('Past Bookings', 'जुनी बुकिंग')} (Events Completed)</span>
+                <span>{showPastBookings ? '−' : '+'}</span>
+              </button>
+
+              {showPastBookings && (
+                <div className="space-y-2 max-h-48 overflow-y-auto mt-4 transition-all" data-testid="past-bookings-list">
+                  {bookings.filter(b => new Date(b.date) < new Date().setHours(0, 0, 0, 0)).sort((a, b) => new Date(b.date) - new Date(a.date)).map((booking) => (
+                    <div key={booking.id} className="p-3 bg-gray-50 rounded-lg border-l-4 border-gray-400" data-testid={`past-booking-${booking.id}`}>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold text-gray-700">{booking.customer_name}</p>
+                          <p className="text-sm text-gray-500">{booking.date} - {booking.event_type}</p>
+                          <p className="text-sm text-gray-500">{booking.num_guests} {t('guests', 'पाहुणे')}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">{t('Completed', 'पूर्ण झाले')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {bookings.filter(b => new Date(b.date) < new Date().setHours(0, 0, 0, 0)).length === 0 && (
+                    <p className="text-gray-500 text-sm italic">{t('No past bookings.', 'कोणतीही जुनी बुकिंग नाही.')}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
     </AdminLayout>
   );
-};
-
-export default AdminCalendar;
+  export default AdminCalendar;

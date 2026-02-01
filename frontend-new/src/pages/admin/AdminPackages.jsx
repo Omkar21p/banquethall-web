@@ -18,7 +18,7 @@ const AdminPackages = () => {
   const [editingId, setEditingId] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
-    package_type: 'thali',
+    package_type: 'normal',
     name: '',
     name_mr: '',
     rent: '',
@@ -27,6 +27,7 @@ const AdminPackages = () => {
     description_mr: '',
     catalogue_url: '',
     catalogue_image: '',
+    images: [],
     items: [],
     custom_fields: {
       rent_label: 'Rent',
@@ -69,7 +70,7 @@ const AdminPackages = () => {
 
   const resetForm = () => {
     setFormData({
-      package_type: 'thali',
+      package_type: 'normal',
       name: '',
       name_mr: '',
       rent: '',
@@ -78,6 +79,7 @@ const AdminPackages = () => {
       description_mr: '',
       catalogue_url: '',
       catalogue_image: '',
+      images: [],
       items: [],
       custom_fields: {
         rent_label: 'Rent',
@@ -125,6 +127,7 @@ const AdminPackages = () => {
       description_mr: pkg.description_mr || '',
       catalogue_url: pkg.catalogue_url || '',
       catalogue_image: pkg.catalogue_image || '',
+      images: pkg.images || [],
       items: pkg.items || [],
       custom_fields: pkg.custom_fields || {
         rent_label: 'Rent',
@@ -150,21 +153,38 @@ const AdminPackages = () => {
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formDataUpload = new FormData();
-    formDataUpload.append('file', file);
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
     try {
-      const response = await axios.post(`${API}/upload-image`, formDataUpload, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          ...getAuthHeaders().headers
-        }
-      });
-      setFormData({ ...formData, catalogue_image: response.data.image_data, catalogue_url: '' });
-      toast.success(t('Image uploaded!', 'इमेज अपलोड झाली!'));
+      const newImages = [];
+
+      // Upload each file
+      for (const file of files) {
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+
+        const response = await axios.post(`${API}/upload-image`, formDataUpload, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            ...getAuthHeaders().headers
+          }
+        });
+        newImages.push(response.data.image_data);
+      }
+
+      // If single file, also set main image for compatibility
+      if (newImages.length > 0) {
+        const mainImage = newImages[0];
+        setFormData(prev => ({
+          ...prev,
+          // If it's the first upload, set as main string too for backward compat
+          catalogue_image: prev.catalogue_image || mainImage,
+          images: [...(prev.images || []), ...newImages],
+          catalogue_url: ''
+        }));
+        toast.success(t(`${newImages.length} images uploaded!`, `${newImages.length} इमेजेस अपलोड झाल्या!`));
+      }
     } catch (error) {
       toast.error(t('Error uploading image', 'इमेज अपलोड करताना एरर'));
     }
@@ -220,8 +240,8 @@ const AdminPackages = () => {
                   className="w-full px-4 py-2 border rounded-lg"
                   data-testid="package-type-select"
                 >
-                  <option value="thali">{t('Thali System', 'थाळी सिस्टम')}</option>
                   <option value="normal">{t('Normal Rent', 'नॉर्मल भाडे')}</option>
+                  <option value="thali">{t('Thali System', 'थाळी सिस्टम')}</option>
                 </select>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
@@ -258,7 +278,28 @@ const AdminPackages = () => {
                   />
                 </div>
               </div>
-              
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-1">{t('Description (English)', 'वर्णन (इंग्रजी)')}</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-4 py-2 border rounded-lg"
+                    rows="2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-1">{t('Description (Marathi)', 'वर्णन (मराठी)')}</label>
+                  <textarea
+                    value={formData.description_mr}
+                    onChange={(e) => setFormData({ ...formData, description_mr: e.target.value })}
+                    className="w-full px-4 py-2 border rounded-lg marathi-text"
+                    rows="2"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-4 border-t pt-4">
                 <div className="flex justify-between items-center">
                   <h4 className="font-bold maroon-text">{t('Custom Charges', 'कस्टम चार्जेस')}</h4>
@@ -321,93 +362,111 @@ const AdminPackages = () => {
                   </div>
                 ))}
               </div>
-              
-              <div className="grid md:grid-cols-2 gap-4">
+
+              {formData.package_type === 'thali' && (
+                <div className="space-y-4 border-t pt-4">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-bold maroon-text">{t('Thali Items / Dynamic Fields', 'थाळी आयटम')}</h4>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({
+                        ...formData,
+                        items: [...formData.items, { name: '', name_mr: '' }]
+                      })}
+                      className="px-3 py-1 bg-[#D4AF37] text-white rounded-lg text-sm hover:bg-[#B8941F]"
+                    >
+                      + {t('Add Item', 'आयटम जोडा')}
+                    </button>
+                  </div>
+                  {formData.items.map((item, idx) => (
+                    <div key={idx} className="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        placeholder={t('Item Name (English)', 'आयटम नाव (इंग्रजी)')}
+                        value={item.name}
+                        onChange={(e) => {
+                          const updated = [...formData.items];
+                          updated[idx] = { ...updated[idx], name: e.target.value };
+                          setFormData({ ...formData, items: updated });
+                        }}
+                        className="px-3 py-2 border rounded-lg"
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder={t('Item Name (Marathi)', 'आयटम नाव (मराठी)')}
+                          value={item.name_mr}
+                          onChange={(e) => {
+                            const updated = [...formData.items];
+                            updated[idx] = { ...updated[idx], name_mr: e.target.value };
+                            setFormData({ ...formData, items: updated });
+                          }}
+                          className="w-full px-3 py-2 border rounded-lg marathi-text"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = formData.items.filter((_, i) => i !== idx);
+                            setFormData({ ...formData, items: updated });
+                          }}
+                          className="px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-2 gap-4 border-t pt-4">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-1">{t('Catalogue Image', 'कॅटलॉग इमेज')}</label>
+                  <label className="block text-sm font-semibold mb-1">{t('Catalogue Images', 'कॅटलॉग इमेजेस')}</label>
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageUpload}
                     className="w-full px-4 py-2 border rounded-lg"
                     data-testid="package-image-upload"
                   />
                   {formData.catalogue_image && (
-                    <div className="mt-2">
-                      <img src={formData.catalogue_image} alt="Catalogue" className="h-32 object-cover rounded-lg" />
+                    <div className="mt-2 relative inline-block">
+                      <img src={formData.catalogue_image} alt="Main Catalogue" className="h-32 object-cover rounded-lg" />
+                      <p className="text-xs text-center">{t('Main', 'मुख्य')}</p>
+                    </div>
+                  )}
+                  {formData.images && formData.images.length > 0 && (
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {formData.images.map((img, idx) => (
+                        <div key={idx} className="relative">
+                          <img src={img} alt={`Catalogue ${idx}`} className="h-32 object-cover rounded-lg" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = formData.images.filter((_, i) => i !== idx);
+                              setFormData({ ...formData, images: updated });
+                            }}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs"
+                          >
+                            X
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                   <p className="text-sm text-gray-600 mt-1">{t('Or provide URL:', 'किंवा URL द्या:')}</p>
                   <input
                     type="text"
                     value={formData.catalogue_url}
-                    onChange={(e) => setFormData({ ...formData, catalogue_url: e.target.value, catalogue_image: '' })}
+                    onChange={(e) => setFormData({ ...formData, catalogue_url: e.target.value })}
                     className="w-full px-4 py-2 border rounded-lg mt-1"
                     placeholder="https://..."
                     data-testid="package-catalogue-input"
                   />
                 </div>
               </div>
-              
-              {formData.package_type === 'thali' && (
-                <div className="space-y-4 border-t pt-4">
-                  <h4 className="font-bold maroon-text">{t('Custom Field Names (Optional)', 'कस्टम फील्ड नावे (ऐच्छिक)')}</h4>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold mb-1">{t('Rent Label (English)', 'भाडे लेबल (इंग्रजी)')}</label>
-                      <input
-                        type="text"
-                        value={formData.custom_fields.rent_label}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          custom_fields: { ...formData.custom_fields, rent_label: e.target.value }
-                        })}
-                        className="w-full px-4 py-2 border rounded-lg"
-                        placeholder="Rent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-1">{t('Rent Label (Marathi)', 'भाडे लेबल (मराठी)')}</label>
-                      <input
-                        type="text"
-                        value={formData.custom_fields.rent_label_mr}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          custom_fields: { ...formData.custom_fields, rent_label_mr: e.target.value }
-                        })}
-                        className="w-full px-4 py-2 border rounded-lg marathi-text"
-                        placeholder="भाडे"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-1">{t('Light Charges Label (English)', 'लाईट चार्जेस लेबल (इंग्रजी)')}</label>
-                      <input
-                        type="text"
-                        value={formData.custom_fields.light_label}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          custom_fields: { ...formData.custom_fields, light_label: e.target.value }
-                        })}
-                        className="w-full px-4 py-2 border rounded-lg"
-                        placeholder="Light Charges"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-1">{t('Light Charges Label (Marathi)', 'लाईट चार्जेस लेबल (मराठी)')}</label>
-                      <input
-                        type="text"
-                        value={formData.custom_fields.light_label_mr}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          custom_fields: { ...formData.custom_fields, light_label_mr: e.target.value }
-                        })}
-                        className="w-full px-4 py-2 border rounded-lg marathi-text"
-                        placeholder="लाईट चार्जेस"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
+
               <button
                 type="submit"
                 className="flex items-center gap-2 px-6 py-2 bg-[#800000] text-white rounded-full hover:bg-[#600000]"

@@ -33,42 +33,42 @@ const LandingPage = () => {
     <div className="min-h-screen">
       <nav className="bg-white shadow-md fixed w-full z-50 top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20 items-center">
-            <h1 className="playfair text-3xl font-bold maroon-text" data-testid="site-title">
+          <div className="flex flex-col md:flex-row justify-between h-auto md:h-20 items-center py-4 md:py-0 gap-4 md:gap-0">
+            <h1 className="playfair text-2xl md:text-3xl font-bold maroon-text" data-testid="site-title">
               {t('Om & Shiv Lawns', 'ॐ आणि शिव लॉन्स')}
             </h1>
-            <div className="flex gap-4 items-center">
+            <div className="flex flex-wrap justify-center gap-2 md:gap-4 items-center">
               <button
                 onClick={toggleLanguage}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-[#D4AF37] text-[#800000] hover:bg-[#D4AF37] hover:text-white transition-all"
+                className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-full border-2 border-[#D4AF37] text-[#800000] hover:bg-[#D4AF37] hover:text-white transition-all"
                 data-testid="language-toggle-btn"
               >
-                <Globe size={20} />
+                <Globe size={16} className="md:w-5 md:h-5" />
                 {language === 'en' ? 'मराठी' : 'English'}
               </button>
               <button
                 onClick={() => navigate('/booking')}
-                className="px-6 py-2 rounded-full bg-[#800000] text-white hover:bg-[#600000] transition-all"
+                className="px-4 py-1.5 md:px-6 md:py-2 text-sm md:text-base rounded-full bg-[#800000] text-white hover:bg-[#600000] transition-all"
                 data-testid="check-dates-btn"
               >
                 {t('Check Dates', 'तारीख तपासा')}
               </button>
               <button
                 onClick={() => navigate('/admin/login')}
-                className="px-6 py-2 rounded-full border-2 border-[#800000] text-[#800000] hover:bg-[#800000] hover:text-white transition-all"
+                className="px-4 py-1.5 md:px-6 md:py-2 text-sm md:text-base rounded-full border-2 border-[#800000] text-[#800000] hover:bg-[#800000] hover:text-white transition-all"
                 data-testid="admin-login-btn"
               >
-                {t('Admin Login', 'प्रशासक लॉगिन')}
+                {t('Admin', 'प्रशासक')}
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      <div className="pt-20">
-        <section className="hero-gradient py-20">
+      <div className="pt-32 md:pt-20">
+        <section className="hero-gradient py-12 md:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="playfair text-5xl md:text-6xl font-bold maroon-text mb-6" data-testid="hero-title">
+            <h2 className="playfair text-3xl md:text-5xl lg:text-6xl font-bold maroon-text mb-4 md:mb-6" data-testid="hero-title">
               {t('Your Perfect Venue Awaits', 'तुमचं परफेक्ट व्हेन्यू येथे आहे')}
             </h2>
             <p className="text-xl text-gray-700 mb-12 max-w-3xl mx-auto">
@@ -85,7 +85,7 @@ const LandingPage = () => {
             <h3 className="playfair text-4xl font-bold text-center maroon-text mb-12" data-testid="halls-section-title">
               {t('Our Banquet Halls', 'आमचे बॅन्क्वेट हॉल')}
             </h3>
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {halls.map((hall) => (
                 <div
                   key={hall.id}

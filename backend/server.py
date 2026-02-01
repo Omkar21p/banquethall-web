@@ -86,6 +86,7 @@ class Package(BaseModel):
     custom_charges: List[dict] = []
     catalogue_url: Optional[str] = None
     catalogue_image: Optional[str] = None
+    images: List[str] = []
     description: Optional[str] = None
     description_mr: Optional[str] = None
     custom_fields: Optional[dict] = {}
