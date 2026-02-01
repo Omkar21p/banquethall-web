@@ -179,13 +179,21 @@ const AdminCalendar = () => {
   };
 
   const getDayClassName = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+
     if (isDateBooked(date)) {
-      return 'bg-red-500 text-white rounded-full';
+      return 'bg-red-500 text-white rounded-full hover:bg-red-600';
     }
     if (isDateShubh(date)) {
-      return 'bg-[#D4AF37] text-white rounded-full font-bold';
+      return 'bg-[#D4AF37] text-white rounded-full font-bold hover:bg-[#B4941F]';
     }
-    return '';
+    if (checkDate.getTime() === today.getTime()) {
+      return 'bg-blue-500 text-white rounded-full font-bold hover:bg-blue-600';
+    }
+    return 'hover:bg-gray-100 rounded-full';
   };
 
   return (
@@ -420,31 +428,6 @@ const AdminCalendar = () => {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-xl shadow-md calendar-container">
             <h3 className="playfair text-xl font-bold maroon-text mb-4">{t('Calendar', 'कॅलेंडर')}</h3>
-  const getDayClassName = (date) => {
-    const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const checkDate = new Date(date);
-            checkDate.setHours(0, 0, 0, 0);
-
-            if (isDateBooked(date)) {
-      return 'bg-red-500 text-white rounded-full hover:bg-red-600';
-    }
-            if (isDateShubh(date)) {
-      return 'bg-[#D4AF37] text-white rounded-full font-bold hover:bg-[#B4941F]';
-    }
-            if (checkDate.getTime() === today.getTime()) {
-      return 'bg-blue-500 text-white rounded-full font-bold hover:bg-blue-600';
-    }
-            return 'hover:bg-gray-100 rounded-full';
-  };
-
-  const getHighlightDates = () => {
-    // ... existing logic if any, or remove if unused ...
-    return [];
-  };
-
-            // ...
-
             <DatePicker
               selected={selectedDate}
               onChange={(date) => setSelectedDate(date)}
