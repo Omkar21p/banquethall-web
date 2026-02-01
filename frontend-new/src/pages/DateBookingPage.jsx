@@ -138,7 +138,8 @@ const DateBookingPage = () => {
                 onChange={(date) => setSelectedDate(date)}
                 inline
                 dayClassName={getDayClassName}
-                minDate={new Date()}
+                minDate={new Date()} /* Keep restriction for booking, but maybe visual was the issue? User said "No option to go back". */
+                showDisabledMonthNavigation
                 data-testid="date-picker"
               />
             </div>

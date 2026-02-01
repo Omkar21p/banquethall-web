@@ -26,10 +26,23 @@
     .react-datepicker__day-name,
     .react-datepicker__day,
     .react-datepicker__time-name {
-        width: 4rem !important;
-        line-height: 4rem !important;
-        font-size: 1.1rem !important;
+        width: 3.5rem !important;
+        /* Reduced from 4rem to fit better */
+        line-height: 3.5rem !important;
+        font-size: 1rem !important;
     }
+}
+
+/* Ensure calendar doesn't overflow */
+.react-datepicker {
+    display: flex !important;
+    flex-direction: column;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.react-datepicker__month {
+    margin: 0.4rem !important;
 }
 
 @tailwind utilities;

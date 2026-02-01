@@ -130,7 +130,35 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-    </AdminLayout>
+
+      {/* Reset System Section */}
+      <div className="bg-red-50 border border-red-200 p-8 rounded-xl shadow-md mt-8">
+        <h3 className="playfair text-xl font-bold text-red-800 mb-2">{t('Danger Zone', 'धोकादायक क्षेत्र')}</h3>
+        <p className="text-sm text-red-600 mb-4">
+          {t('Reset the system by clearing all bookings and bills. This action cannot be undone.', 'सर्व बुकिंग आणि बिले साफ करून सिस्टम रीसेट करा. ही कृती पूर्ववत केली जाऊ शकत नाही.')}
+        </p>
+        <button
+          onClick={() => {
+            if (window.confirm(t('Are you sure you want to delete ALL data? This action is permanent.', 'तुम्हाला खात्री आहे का की तुम्ही सर्व डेटा हटवू इच्छिता? ही कृती कायमस्वरूपी आहे.'))) {
+              if (window.confirm(t('Please confirm again. Type OK to proceed.', 'कृपया पुन्हा पुष्टी करा.'))) {
+                // Logic to delete all data
+                // Since we don't have a direct 'reset' endpoint, we might need to implement one or iterate.
+                // For now, I'll show a toast as we need backend support for a safe clean reset.
+                axios.post(`${API}/reset-system`, {}, getAuthHeaders())
+                  .then(() => {
+                    fetchStats();
+                    alert('System reset successfully.');
+                  })
+                  .catch(() => alert('Reset feature requires backend/admin privileges.'));
+              }
+            }
+          }}
+          className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold"
+        >
+          {t('Reset Everything', 'सर्वकाही रीसेट करा')}
+        </button>
+      </div>
+    </AdminLayout >
   );
 };
 

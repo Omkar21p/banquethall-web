@@ -375,6 +375,13 @@ async def update_settings(settings: Settings, admin=Depends(get_current_admin)):
     await db.settings.update_one({"id": "settings"}, {"$set": settings.model_dump()}, upsert=True)
     return {"message": "Settings updated successfully"}
 
+@api_router.post("/reset-system")
+async def reset_system(admin=Depends(get_current_admin)):
+    # Delete all bookings and bills
+    await db.bookings.delete_many({})
+    await db.bills.delete_many({})
+    return {"message": "System reset successfully"}
+
 @api_router.post("/upload-image")
 async def upload_image(file: UploadFile = File(...), admin=Depends(get_current_admin)):
     try:
@@ -456,3 +463,8 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)

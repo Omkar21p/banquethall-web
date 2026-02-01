@@ -13,14 +13,18 @@ import {
   LogOut,
   Globe,
   Users,
-  Building2
+  Building2,
+  Menu,
+  X
 } from 'lucide-react';
+import { useState } from 'react';
 
 const AdminLayout = ({ children }) => {
   const { admin, logout } = useAuth();
   const { language, toggleLanguage, t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (!admin) {
     navigate('/admin/login');
@@ -46,7 +50,27 @@ const AdminLayout = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-[#FDFBF7]">
-      <aside className="w-64 admin-sidebar text-white">
+      {/* Mobile Menu Button */}
+      <button
+        className="md:hidden fixed top-4 right-4 z-[60] bg-[#800000] text-white p-2 rounded-lg shadow-lg"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+      >
+        {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - responsive classes */}
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-50 w-64 admin-sidebar text-white transform transition-transform duration-300 ease-in-out
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
         <div className="p-6">
           <h2 className="playfair text-2xl font-bold mb-2">{admin.hall_name}</h2>
           <p className="text-sm opacity-90">{admin.username}</p>
