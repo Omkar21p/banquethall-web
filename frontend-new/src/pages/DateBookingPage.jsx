@@ -71,13 +71,21 @@ const DateBookingPage = () => {
   };
 
   const getDayClassName = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+
     if (isDateBooked(date)) {
-      return 'bg-red-500 text-white rounded-full';
+      return 'bg-red-500 text-white rounded-full hover:bg-red-600';
     }
     if (isDateShubh(date)) {
-      return 'bg-[#D4AF37] text-white rounded-full font-bold';
+      return 'bg-[#D4AF37] text-white rounded-full font-bold hover:bg-[#B4941F]';
     }
-    return '';
+    if (checkDate.getTime() === today.getTime()) {
+      return 'bg-blue-500 text-white rounded-full font-bold hover:bg-blue-600';
+    }
+    return 'hover:bg-gray-100 rounded-full';
   };
 
   const selectedHallData = halls.find(h => h.id === selectedHall);
@@ -139,7 +147,7 @@ const DateBookingPage = () => {
                   onChange={(date) => setSelectedDate(date)}
                   inline
                   dayClassName={getDayClassName}
-                  minDate={new Date(new Date().setFullYear(new Date().getFullYear() - 1))} /* Allow looking back 1 year */
+                  minDate={null} /* Allow full navigation to past */
                   showDisabledMonthNavigation
                   data-testid="date-picker"
                 />
@@ -159,6 +167,10 @@ const DateBookingPage = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-6 h-6 bg-red-500 rounded-full"></div>
                     <span>{t('Booked', 'बुक केलेले')}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-blue-500 rounded-full"></div>
+                    <span>{t('Today', 'आज')}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-6 h-6 bg-white border-2 border-gray-300 rounded-full"></div>
