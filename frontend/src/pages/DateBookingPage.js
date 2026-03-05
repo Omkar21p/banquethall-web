@@ -158,6 +158,14 @@ const DateBookingPage = () => {
                     <span>{t('Booked', 'बुक केलेले')}</span>
                   </div>
                   <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-[#3B82F6] rounded-full"></div>
+                    <span>{t('Today', 'आज')}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-[#800000] rounded-full"></div>
+                    <span>{t('Selected Date', 'निवडलेली तारीख')}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
                     <div className="w-6 h-6 bg-white border-2 border-gray-300 rounded-full"></div>
                     <span>{t('Regular Day', 'सामान्य दिवस')}</span>
                   </div>
