@@ -54,7 +54,13 @@ const EventManager = () => {
             if (booking.service_bill) {
                 setBillData(booking.service_bill);
             } else {
-                setBillData({ discount: 0, extraCharges: 0, notes: '' });
+                // Try to restore from backup if exists
+                const backup = localStorage.getItem(`bill_backup_${booking.id}`);
+                if (backup) {
+                    setBillData(JSON.parse(backup));
+                } else {
+                    setBillData({ discount: 0, extraCharges: 0, notes: '' });
+                }
             }
         }
     };
@@ -76,9 +82,16 @@ const EventManager = () => {
 
         try {
             await axios.put(`${API}/bookings/${selectedBooking.id}`, updatedBooking, getAuthHeaders());
+            // Sync local state immediately
             setSelectedBooking(updatedBooking);
             setNewService({ serviceType: '', providerName: '', amount: '', description: '' });
-            fetchBookings();
+            // Refresh the entire list and re-sync selection
+            const response = await axios.get(`${API}/bookings`, getAuthHeaders());
+            const freshBookings = response.data.filter(b => b.status === 'booked');
+            setBookings(freshBookings);
+            const refetched = freshBookings.find(b => b.id === selectedBooking.id);
+            if (refetched) setSelectedBooking(refetched);
+
             toast.success(t('Service added!', 'सेवा जोडली!'));
         } catch (err) {
             toast.error(t('Error adding service', 'सेवा जोडताना एरर'));
@@ -265,7 +278,15 @@ const EventManager = () => {
         try {
             await axios.put(`${API}/bookings/${selectedBooking.id}`, updatedBooking, getAuthHeaders());
             setSelectedBooking(updatedBooking);
-            fetchBookings();
+            // Clear backup now that it's saved
+            localStorage.removeItem(`bill_backup_${selectedBooking.id}`);
+
+            const response = await axios.get(`${API}/bookings`, getAuthHeaders());
+            const freshBookings = response.data.filter(b => b.status === 'booked');
+            setBookings(freshBookings);
+            const refetched = freshBookings.find(b => b.id === selectedBooking.id);
+            if (refetched) setSelectedBooking(refetched);
+
             toast.success(t('Service bill saved!', 'सेवा बिल जतन झाले!'));
         } catch (err) {
             toast.error(t('Error saving bill', 'बिल जतन करताना एरर'));
