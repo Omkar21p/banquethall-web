@@ -70,22 +70,19 @@ const DateBookingPage = () => {
     return bookings.some(b => b.date === dateStr && b.status === 'booked');
   };
 
-  const getDayClassName = (date) => {
+  const isToday = (date) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+  };
 
-    if (isDateBooked(date)) {
-      return 'bg-red-500 text-white rounded-full hover:bg-red-600';
-    }
-    if (isDateShubh(date)) {
-      return 'bg-[#D4AF37] text-white rounded-full font-bold hover:bg-[#B4941F]';
-    }
-    if (checkDate.getTime() === today.getTime()) {
-      return 'bg-blue-500 text-white rounded-full font-bold hover:bg-blue-600';
-    }
-    return 'hover:bg-gray-100 rounded-full';
+  const getDayClassName = (date) => {
+    // Strict priority order — highest wins, no overrides allowed
+    if (isDateBooked(date)) return 'date-booked';
+    if (isToday(date)) return 'date-today';
+    if (isDateShubh(date)) return 'date-shubh';
+    return '';
   };
 
   const selectedHallData = halls.find(h => h.id === selectedHall);
@@ -171,6 +168,10 @@ const DateBookingPage = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-6 h-6 bg-blue-500 rounded-full"></div>
                     <span>{t('Today', 'आज')}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-[#800000] rounded-full"></div>
+                    <span>{t('Selected Date', 'निवडलेली तारीख')}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-6 h-6 bg-white border-2 border-gray-300 rounded-full"></div>

@@ -178,22 +178,19 @@ const AdminCalendar = () => {
     return bookings.some(b => b.date === dateStr);
   };
 
-  const getDayClassName = (date) => {
+  const isToday = (date) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+  };
 
-    if (isDateBooked(date)) {
-      return 'bg-red-500 text-white rounded-full hover:bg-red-600';
-    }
-    if (isDateShubh(date)) {
-      return 'bg-[#D4AF37] text-white rounded-full font-bold hover:bg-[#B4941F]';
-    }
-    if (checkDate.getTime() === today.getTime()) {
-      return 'bg-blue-500 text-white rounded-full font-bold hover:bg-blue-600';
-    }
-    return 'hover:bg-gray-100 rounded-full';
+  const getDayClassName = (date) => {
+    // Strict priority order — highest wins, no overrides allowed
+    if (isDateBooked(date)) return 'date-booked';
+    if (isToday(date)) return 'date-today';
+    if (isDateShubh(date)) return 'date-shubh';
+    return '';
   };
 
   return (
