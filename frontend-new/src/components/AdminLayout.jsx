@@ -15,7 +15,8 @@ import {
   Users,
   Building2,
   Menu,
-  X
+  X,
+  ClipboardList
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -37,6 +38,7 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/services', icon: Briefcase, label: t('Services', 'सेवा') },
     { path: '/admin/packages', icon: Package, label: t('Packages', 'पॅकेजेस') },
     { path: '/admin/calendar', icon: Calendar, label: t('Calendar', 'कॅलेंडर') },
+    { path: '/admin/events', icon: ClipboardList, label: t('Event Management', 'कार्यक्रम व्यवस्थापन') },
     { path: '/admin/bills/new', icon: FileText, label: t('New Bill', 'नविन बिल') },
     { path: '/admin/bills', icon: FolderOpen, label: t('Records', 'रेकॉर्ड्स') },
     { path: '/admin/users', icon: Users, label: t('Manage Admins', 'प्रशासक व्यवस्थापन') },

@@ -112,6 +112,8 @@ class Booking(BaseModel):
     booking_taken_by: Optional[str] = None
     booking_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     status: str = "booked"
+    event_services: List[dict] = []
+    service_bill: Optional[dict] = None
 
 class Bill(BaseModel):
     model_config = ConfigDict(extra="ignore")

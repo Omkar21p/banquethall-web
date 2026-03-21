@@ -18,6 +18,7 @@ import BillGeneration from './pages/admin/BillGeneration';
 import OlderBookings from './pages/admin/OlderBookings';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminUsers from './pages/admin/AdminUsers';
+import EventManager from './pages/admin/EventManager';
 
 import './App.css';
 
@@ -41,6 +42,7 @@ function App() {
             <Route path="/admin/bills/new" element={<BillGeneration />} />
             <Route path="/admin/bills/edit/:billId" element={<BillGeneration />} />
             <Route path="/admin/bills" element={<OlderBookings />} />
+            <Route path="/admin/events" element={<EventManager />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
           </Routes>
