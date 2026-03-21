@@ -4,16 +4,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force standard box-sizing */
+* {
+    box-sizing: border-box !important;
+}
+
 body {
     margin: 0;
     font-family: 'Lato', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: #FDFBF7;
-}
-
-code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 .marathi-text {
@@ -24,124 +25,118 @@ code {
     font-family: 'Playfair Display', serif;
 }
 
-@layer base {
-    :root {
-        --background: 0 0% 100%;
-        --foreground: 0 0% 10%;
-        --card: 0 0% 100%;
-        --card-foreground: 0 0% 10%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 10%;
-        --primary: 0 100% 25%;
-        --primary-foreground: 0 0% 98%;
-        --secondary: 45 65% 55%;
-        --secondary-foreground: 0 0% 10%;
-        --muted: 0 0% 96.1%;
-        --muted-foreground: 0 0% 45.1%;
-        --accent: 45 65% 55%;
-        --accent-foreground: 0 0% 10%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 89.8%;
-        --input: 0 0% 89.8%;
-        --ring: 0 100% 25%;
-        --radius: 0.75rem;
-    }
-}
-
-@layer base {
-    * {
-        @apply border-border;
-    }
-
-    body {
-        @apply bg-background text-foreground;
-    }
-}
-
-.react-datepicker-wrapper {
-    width: 100%;
-}
-
+/* React DatePicker Custom Styles */
 .react-datepicker {
-    font-family: 'Lato', sans-serif;
-    border: 1px solid #D4AF37;
-    border-radius: 0.75rem;
+    font-family: 'Lato', sans-serif !important;
+    border: 1px solid #D4AF37 !important;
+    border-radius: 0.75rem !important;
+    width: 100% !important;
 }
 
 .react-datepicker__header {
-    background-color: #800000;
-    border-bottom: 1px solid #D4AF37;
-    border-radius: 0.75rem 0.75rem 0 0;
+    background-color: #800000 !important;
+    border-bottom: 2px solid #D4AF37 !important;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
 }
 
 .react-datepicker__current-month,
 .react-datepicker__day-name {
-    color: white;
+    color: white !important;
 }
 
-/* ===== Suppress all default react-datepicker day states ===== */
-.react-datepicker__day--today {
+.react-datepicker__day-name,
+.react-datepicker__day {
+    width: 3rem !important;
+    line-height: 3rem !important;
+    margin: 0.2rem !important;
+}
+
+/* Suppress all default react-datepicker highlights */
+.react-datepicker__day--today,
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected,
+.react-datepicker__day:hover {
     background-color: transparent !important;
     color: inherit !important;
+    border-radius: 0 !important;
     font-weight: normal !important;
 }
 
-.react-datepicker__day--selected {
-    background-color: transparent !important;
-    color: inherit !important;
-}
+/* ===== STRICT COLOR PRIORITY (STAMP LOGIC) ===== */
 
-.react-datepicker__day--keyboard-selected {
-    background-color: transparent !important;
-    color: inherit !important;
-}
-
-/* ===== Priority 1: BOOKED — RED (highest) ===== */
-.date-booked,
-.date-booked:hover,
-.date-booked.react-datepicker__day--selected,
-.date-booked.react-datepicker__day--today,
-.date-booked.react-datepicker__day--keyboard-selected {
+/* P1: BOOKED (RED) - HIGHEST PRIORITY */
+.date-booked {
     background-color: #EF4444 !important;
     color: white !important;
     border-radius: 50% !important;
     font-weight: bold !important;
 }
 
-/* ===== Priority 2: TODAY — BLUE ===== */
-.date-today,
-.date-today:hover,
-.date-today.react-datepicker__day--selected,
-.date-today.react-datepicker__day--keyboard-selected {
+/* Use multiple selectors to ensure it stays RED even when selected or hovered */
+.date-booked:hover,
+.date-booked.react-datepicker__day--selected,
+.date-booked.react-datepicker__day--keyboard-selected {
+    background-color: #EF4444 !important;
+    color: white !important;
+}
+
+/* P2: TODAY (BLUE) */
+.date-today:not(.date-booked) {
     background-color: #3B82F6 !important;
     color: white !important;
     border-radius: 50% !important;
     font-weight: bold !important;
 }
 
-/* ===== Priority 3: SHUBH MUHURT — GOLDEN ===== */
-.date-shubh,
-.date-shubh:hover,
-.date-shubh.react-datepicker__day--selected,
-.date-shubh.react-datepicker__day--keyboard-selected {
+.date-today:not(.date-booked):hover,
+.date-today:not(.date-booked).react-datepicker__day--selected,
+.date-today:not(.date-booked).react-datepicker__day--keyboard-selected {
+    background-color: #3B82F6 !important;
+    color: white !important;
+}
+
+/* P3: SHUBH MUHURT (GOLDEN) */
+.date-shubh:not(.date-booked):not(.date-today) {
     background-color: #D4AF37 !important;
     color: white !important;
     border-radius: 50% !important;
     font-weight: bold !important;
 }
 
-/* ===== Priority 4: SELECTED (normal dates only) — MAROON ===== */
-.react-datepicker__day--selected:not(.date-booked):not(.date-today):not(.date-shubh),
-.react-datepicker__day--selected:not(.date-booked):not(.date-today):not(.date-shubh):hover {
+.date-shubh:not(.date-booked):not(.date-today):hover,
+.date-shubh:not(.date-booked):not(.date-today).react-datepicker__day--selected,
+.date-shubh:not(.date-booked):not(.date-today).react-datepicker__day--keyboard-selected {
+    background-color: #D4AF37 !important;
+    color: white !important;
+}
+
+/* P4: SELECTED (MAROON) - ONLY FOR NORMAL DATES */
+.react-datepicker__day--selected:not(.date-booked):not(.date-today):not(.date-shubh) {
     background-color: #800000 !important;
     color: white !important;
     border-radius: 50% !important;
 }
 
-/* ===== Priority 5: HOVER (normal dates only — lowest) ===== */
-.react-datepicker__day:not(.date-booked):not(.date-today):not(.date-shubh):not(.react-datepicker__day--selected):not(.react-datepicker__day--outside-month):hover {
+/* P5: HOVER (LIGHT MAROON) - ONLY FOR NORMAL DATES */
+.react-datepicker__day:hover:not(.date-booked):not(.date-today):not(.date-shubh):not(.react-datepicker__day--selected):not(.react-datepicker__day--outside-month) {
     background-color: rgba(128, 0, 0, 0.12) !important;
     color: #800000 !important;
     border-radius: 50% !important;
+}
+
+/* Legend items for consistency */
+.legend-booked {
+    background-color: #EF4444;
+}
+
+.legend-today {
+    background-color: #3B82F6;
+}
+
+.legend-shubh {
+    background-color: #D4AF37;
+}
+
+.legend-selected {
+    background-color: #800000;
 }

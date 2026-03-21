@@ -158,16 +158,16 @@ const DateBookingPage = () => {
                 </h4>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-[#D4AF37] rounded-full"></div>
-                    <span>{t('Shubh Muhurt (Available)', 'शुभ मुहूर्त (उपलब्ध)')}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-red-500 rounded-full"></div>
+                    <div className="w-6 h-6 bg-[#EF4444] rounded-full"></div>
                     <span>{t('Booked', 'बुक केलेले')}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-blue-500 rounded-full"></div>
+                    <div className="w-6 h-6 bg-[#3B82F6] rounded-full"></div>
                     <span>{t('Today', 'आज')}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-[#D4AF37] rounded-full"></div>
+                    <span>{t('Shubh Muhurt (Available)', 'शुभ मुहूर्त (उपलब्ध)')}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-6 h-6 bg-[#800000] rounded-full"></div>
