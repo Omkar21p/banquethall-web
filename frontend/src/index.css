@@ -80,22 +80,16 @@ code {
     color: white;
 }
 
+/* ===== Suppress all default react-datepicker day states ===== */
 .react-datepicker__day--today {
-    background-color: #3B82F6 !important;
-    color: white !important;
-    border-radius: 50%;
+    background-color: transparent !important;
+    color: inherit !important;
+    font-weight: normal !important;
 }
 
 .react-datepicker__day--selected {
-    background-color: #800000 !important;
-    color: white !important;
-    border-radius: 50%;
-}
-
-.react-datepicker__day--selected.react-datepicker__day--today {
-    background-color: #3B82F6 !important;
-    color: white !important;
-    border-radius: 50%;
+    background-color: transparent !important;
+    color: inherit !important;
 }
 
 .react-datepicker__day--keyboard-selected {
@@ -103,13 +97,51 @@ code {
     color: inherit !important;
 }
 
-.react-datepicker__day:hover {
-    background-color: rgba(128, 0, 0, 0.15) !important;
-    color: #800000 !important;
-    border-radius: 50%;
+/* ===== Priority 1: BOOKED — RED (highest) ===== */
+.date-booked,
+.date-booked:hover,
+.date-booked.react-datepicker__day--selected,
+.date-booked.react-datepicker__day--today,
+.date-booked.react-datepicker__day--keyboard-selected {
+    background-color: #EF4444 !important;
+    color: white !important;
+    border-radius: 50% !important;
+    font-weight: bold !important;
 }
 
-.react-datepicker__day--selected:hover {
-    background-color: #600000 !important;
+/* ===== Priority 2: TODAY — BLUE ===== */
+.date-today,
+.date-today:hover,
+.date-today.react-datepicker__day--selected,
+.date-today.react-datepicker__day--keyboard-selected {
+    background-color: #3B82F6 !important;
     color: white !important;
+    border-radius: 50% !important;
+    font-weight: bold !important;
+}
+
+/* ===== Priority 3: SHUBH MUHURT — GOLDEN ===== */
+.date-shubh,
+.date-shubh:hover,
+.date-shubh.react-datepicker__day--selected,
+.date-shubh.react-datepicker__day--keyboard-selected {
+    background-color: #D4AF37 !important;
+    color: white !important;
+    border-radius: 50% !important;
+    font-weight: bold !important;
+}
+
+/* ===== Priority 4: SELECTED (normal dates only) — MAROON ===== */
+.react-datepicker__day--selected:not(.date-booked):not(.date-today):not(.date-shubh),
+.react-datepicker__day--selected:not(.date-booked):not(.date-today):not(.date-shubh):hover {
+    background-color: #800000 !important;
+    color: white !important;
+    border-radius: 50% !important;
+}
+
+/* ===== Priority 5: HOVER (normal dates only — lowest) ===== */
+.react-datepicker__day:not(.date-booked):not(.date-today):not(.date-shubh):not(.react-datepicker__day--selected):not(.react-datepicker__day--outside-month):hover {
+    background-color: rgba(128, 0, 0, 0.12) !important;
+    color: #800000 !important;
+    border-radius: 50% !important;
 }

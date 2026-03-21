@@ -70,13 +70,18 @@ const DateBookingPage = () => {
     return bookings.some(b => b.date === dateStr && b.status === 'booked');
   };
 
+  const isToday = (date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+  };
+
   const getDayClassName = (date) => {
-    if (isDateBooked(date)) {
-      return 'bg-red-500 text-white rounded-full';
-    }
-    if (isDateShubh(date)) {
-      return 'bg-[#D4AF37] text-white rounded-full font-bold';
-    }
+    // Strict priority order — highest wins, no overrides allowed
+    if (isDateBooked(date)) return 'date-booked';
+    if (isToday(date)) return 'date-today';
+    if (isDateShubh(date)) return 'date-shubh';
     return '';
   };
 
