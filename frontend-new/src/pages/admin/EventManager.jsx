@@ -78,10 +78,125 @@ const EventManager = () => {
             await axios.put(`${API}/bookings/${selectedBooking.id}`, updatedBooking, getAuthHeaders());
             setSelectedBooking(updatedBooking);
             setNewService({ serviceType: '', providerName: '', amount: '', description: '' });
+            fetchBookings();
             toast.success(t('Service added!', 'सेवा जोडली!'));
         } catch (err) {
             toast.error(t('Error adding service', 'सेवा जोडताना एरर'));
         }
+    };
+
+    const handlePrintServiceBill = () => {
+        if (!selectedBooking.service_bill) {
+            toast.error(t('Save the bill first to print!', 'प्रिंट करण्यासाठी आधी बिल जतन करा!'));
+            return;
+        }
+
+        const printWindow = window.open('', '_blank');
+        const bill = selectedBooking.service_bill;
+
+        const html = `
+      <html>
+        <head>
+          <title>Service Bill - ${selectedBooking.customer_name}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+            .header { text-align: center; border-bottom: 3px solid #800000; padding-bottom: 20px; margin-bottom: 30px; }
+            .maroon { color: #800000; margin: 0; }
+            .bill-info { display: flex; justify-content: space-between; margin-bottom: 30px; background: #fdfbf7; padding: 15px; border-radius: 8px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            th { background-color: #800000; color: white; border: 1px solid #600000; padding: 12px; text-align: left; }
+            td { padding: 12px; border: 1px solid #eee; }
+            .summary-container { display: flex; justify-content: flex-end; }
+            .summary { width: 300px; }
+            .summary-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #ddd; }
+            .total { font-weight: bold; font-size: 1.4em; color: #800000; border-top: 2px solid #800000; margin-top: 10px; padding-top: 10px; border-bottom: none; }
+            .notes { margin-top: 40px; padding: 20px; background: #f9f9f9; border-left: 5px solid #D4AF37; border-radius: 4px; }
+            .footer { margin-top: 60px; text-align: center; font-size: 0.9em; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+            @media print {
+              button { display: none; }
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 class="maroon">OM LAWNS & BANQUET HALL</h1>
+            <p>Service Invoice</p>
+          </div>
+          
+          <div class="bill-info">
+            <div>
+              <p><strong>Customer:</strong> ${selectedBooking.customer_name}</p>
+              <p><strong>City:</strong> ${selectedBooking.customer_city}</p>
+              <p><strong>Date:</strong> ${selectedBooking.date}</p>
+            </div>
+            <div style="text-align: right;">
+              <p><strong>Invoice No:</strong> #SRV-${selectedBooking.id.substring(0, 6).toUpperCase()}</p>
+              <p><strong>Event Type:</strong> ${selectedBooking.event_type}</p>
+              <p><strong>Bill Date:</strong> ${new Date(bill.updatedAt).toLocaleDateString()}</p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Service Type</th>
+                <th>Provider Name</th>
+                <th style="text-align: right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${selectedBooking.event_services.map(s => `
+                <tr>
+                  <td>${s.serviceType} / ${s.description || '-'}</td>
+                  <td>${s.providerName}</td>
+                  <td style="text-align: right;">₹${s.amount.toLocaleString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="summary-container">
+            <div class="summary">
+              <div class="summary-row">
+                <span>Subtotal:</span>
+                <span>₹${bill.subtotal.toLocaleString()}</span>
+              </div>
+              <div class="summary-row">
+                <span>Discount:</span>
+                <span>-₹${bill.discount.toLocaleString()}</span>
+              </div>
+              <div class="summary-row">
+                <span>Extra Charges:</span>
+                <span>+₹${bill.extraCharges.toLocaleString()}</span>
+              </div>
+              <div class="summary-row total">
+                <span>Final Amount:</span>
+                <span>₹${bill.finalAmount.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          ${bill.notes ? `
+            <div class="notes">
+              <strong>Notes:</strong><br/>
+              ${bill.notes}
+            </div>
+          ` : ''}
+
+          <div class="footer">
+            <p>Thank you for choosing Om Lawns & Banquet Hall!</p>
+            <p>This is a computer-generated summary of services.</p>
+          </div>
+          <script>
+            window.onload = function() { window.print(); }
+          </script>
+        </body>
+      </html>
+    `;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
     };
 
     const handleDeleteService = async (index) => {
@@ -91,6 +206,7 @@ const EventManager = () => {
         try {
             await axios.put(`${API}/bookings/${selectedBooking.id}`, updatedBooking, getAuthHeaders());
             setSelectedBooking(updatedBooking);
+            fetchBookings();
             toast.success(t('Service deleted!', 'सेवा हटवली!'));
         } catch (err) {
             toast.error(t('Error deleting service', 'सेवा हटवताना एरर'));
@@ -112,6 +228,7 @@ const EventManager = () => {
             setSelectedBooking(updatedBooking);
             setIsEditingService(null);
             setNewService({ serviceType: '', providerName: '', amount: '', description: '' });
+            fetchBookings();
             toast.success(t('Service updated!', 'सेवा अपडेट झाली!'));
         } catch (err) {
             toast.error(t('Error updating service', 'सेवा अपडेट करताना एरर'));
@@ -148,6 +265,7 @@ const EventManager = () => {
         try {
             await axios.put(`${API}/bookings/${selectedBooking.id}`, updatedBooking, getAuthHeaders());
             setSelectedBooking(updatedBooking);
+            fetchBookings();
             toast.success(t('Service bill saved!', 'सेवा बिल जतन झाले!'));
         } catch (err) {
             toast.error(t('Error saving bill', 'बिल जतन करताना एरर'));
@@ -306,7 +424,7 @@ const EventManager = () => {
                                                 <input
                                                     type="number"
                                                     value={billData.discount}
-                                                    onChange={(e) => setBillData({ ...billData, discount: e.target.value })}
+                                                    onChange={(e) => setBillData({ ...billData, discount: parseFloat(e.target.value) || 0 })}
                                                     className="w-full px-2 py-1.5 border rounded"
                                                 />
                                             </div>
@@ -315,7 +433,7 @@ const EventManager = () => {
                                                 <input
                                                     type="number"
                                                     value={billData.extraCharges}
-                                                    onChange={(e) => setBillData({ ...billData, extraCharges: e.target.value })}
+                                                    onChange={(e) => setBillData({ ...billData, extraCharges: parseFloat(e.target.value) || 0 })}
                                                     className="w-full px-2 py-1.5 border rounded"
                                                 />
                                             </div>
@@ -340,12 +458,22 @@ const EventManager = () => {
                                         </div>
                                     </div>
 
-                                    <button
-                                        onClick={handleSaveServiceBill}
-                                        className="w-full py-3 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 transition flex items-center justify-center gap-2"
-                                    >
-                                        <Save size={20} /> {t('Save Service Bill', 'सेवा बिल जतन करा')}
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleSaveServiceBill}
+                                            className="flex-1 py-3 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 transition flex items-center justify-center gap-2"
+                                        >
+                                            <Save size={20} /> {t('Save Service Bill', 'सेवा बिल जतन करा')}
+                                        </button>
+                                        {selectedBooking.service_bill && (
+                                            <button
+                                                onClick={handlePrintServiceBill}
+                                                className="px-6 py-3 bg-[#D4AF37] text-white rounded-full font-bold hover:bg-[#B8941F] transition flex items-center justify-center gap-2"
+                                            >
+                                                <FileText size={20} /> {t('Print', 'प्रिंट')}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>

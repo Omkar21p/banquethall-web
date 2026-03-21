@@ -35,6 +35,13 @@ const OlderBookings = () => {
 
   useEffect(() => {
     filterBills();
+    // Sync selectedBill if it exists and bills list has updated
+    if (selectedBill) {
+      const refreshed = bills.find(b => b.id === selectedBill.id);
+      if (refreshed) {
+        setSelectedBill(refreshed);
+      }
+    }
   }, [bills, selectedHall, searchTerm]);
 
   const fetchHalls = async () => {
