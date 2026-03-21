@@ -483,12 +483,12 @@ const EventManager = () => {
                             <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-[#D4AF37]">
                                 <h3 className="playfair text-xl font-bold maroon-text mb-4">{t('Event Summary', 'कार्यक्रम सारांश')}</h3>
                                 <div className="space-y-3">
-                                    <div className="flex justify-between border-b pb-2"><span className="text-gray-500">{t('Customer:', 'ग्राहक:')}$</span><span className="font-bold">{selectedBooking.customer_name}</span></div>
-                                    <div className="flex justify-between border-b pb-2"><span className="text-gray-500">{t('City:', 'शहर:')}$</span><span className="font-bold">{selectedBooking.customer_city}</span></div>
-                                    <div className="flex justify-between border-b pb-2"><span className="text-gray-500">{t('Phone:', 'फोन:')}$</span><span className="font-bold">{selectedBooking.customer_phone}</span></div>
-                                    <div className="flex justify-between border-b pb-2"><span className="text-gray-500">{t('Date:', 'तारीख:')}$</span><span className="font-bold">{selectedBooking.date}</span></div>
-                                    <div className="flex justify-between border-b pb-2"><span className="text-gray-500">{t('Event Type:', 'प्रकार:')}$</span><span className="font-bold">{selectedBooking.event_type}</span></div>
-                                    <div className="flex justify-between"><span className="text-gray-500">{t('Guests:', 'पाहुणे:')}$</span><span className="font-bold">{selectedBooking.num_guests}</span></div>
+                                    <div className="flex justify-between border-b pb-2"><span className="text-gray-500">{t('Customer:', 'ग्राहक:')}</span><span className="font-bold">{selectedBooking.customer_name}</span></div>
+                                    <div className="flex justify-between border-b pb-2"><span className="text-gray-500">{t('City:', 'शहर:')}</span><span className="font-bold">{selectedBooking.customer_city}</span></div>
+                                    <div className="flex justify-between border-b pb-2"><span className="text-gray-500">{t('Phone:', 'फोन:')}</span><span className="font-bold">{selectedBooking.customer_phone}</span></div>
+                                    <div className="flex justify-between border-b pb-2"><span className="text-gray-500">{t('Date:', 'तारीख:')}</span><span className="font-bold">{selectedBooking.date}</span></div>
+                                    <div className="flex justify-between border-b pb-2"><span className="text-gray-500">{t('Event Type:', 'प्रकार:')}</span><span className="font-bold">{selectedBooking.event_type}</span></div>
+                                    <div className="flex justify-between"><span className="text-gray-500">{t('Guests:', 'पाहुणे:')}</span><span className="font-bold">{selectedBooking.num_guests}</span></div>
                                 </div>
                             </div>
 
