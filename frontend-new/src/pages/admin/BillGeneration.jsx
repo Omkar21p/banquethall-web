@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Save, FileDown, Share2, Eye } from 'lucide-react';
 import { toast } from 'sonner';
@@ -14,6 +15,8 @@ const API = `${BACKEND_URL}/api`;
 const BillGeneration = () => {
   const { getAuthHeaders } = useAuth();
   const { language, t } = useLanguage();
+  const { billId } = useParams();
+  const navigate = useNavigate();
   const [billLanguage, setBillLanguage] = useState('en');
   const [halls, setHalls] = useState([]);
   const [services, setServices] = useState([]);
@@ -39,6 +42,7 @@ const BillGeneration = () => {
     pre_booking_amount: '0',
     total_amount: 0,
     balance_due: 0,
+    deposits: [],
     manual_total: false,
     manual_balance: false,
     customized: false
@@ -46,7 +50,23 @@ const BillGeneration = () => {
 
   useEffect(() => {
     fetchHalls();
-  }, []);
+    if (billId) {
+      fetchBill();
+    }
+  }, [billId]);
+
+  const fetchBill = async () => {
+    try {
+      const response = await axios.get(`${API}/bills`, getAuthHeaders());
+      const bill = response.data.find(b => b.id === billId);
+      if (bill) {
+        setBillData(bill);
+      }
+    } catch (error) {
+      console.error('Error fetching bill:', error);
+      toast.error(t('Error loading bill', 'बिल लोड करताना एरर'));
+    }
+  };
 
   useEffect(() => {
     if (billData.hall_id) {
@@ -203,28 +223,15 @@ const BillGeneration = () => {
 
   const handleSaveBill = async () => {
     try {
-      await axios.post(`${API}/bills`, billData, getAuthHeaders());
-      toast.success(t('Bill saved successfully!', 'बिल यशस्वीपणे जतन झाले!'));
-      // Reset form
-      setBillData({
-        hall_id: '',
-        hall_name: '',
-        customer_name: '',
-        customer_city: '',
-        booking_date: '',
-        event_date: '',
-        num_guests: '',
-        event_type: 'लग्न',
-        services: [],
-        thali_items: [],
-        hall_rent: '',
-        custom_charges: [],
-        discount: '0',
-        pre_booking_amount: '0',
-        total_amount: 0,
-        balance_due: 0
-      });
-      setShowPreview(false);
+      if (billId) {
+        await axios.put(`${API}/bills/${billId}`, billData, getAuthHeaders());
+        toast.success(t('Bill updated successfully!', 'बिल यशस्वीपणे अपडेट झाले!'));
+      } else {
+        await axios.post(`${API}/bills`, billData, getAuthHeaders());
+        toast.success(t('Bill saved successfully!', 'बिल यशस्वीपणे जतन झाले!'));
+      }
+      // Navigate back to bills list
+      navigate('/admin/bills');
     } catch (error) {
       toast.error(t('Error saving bill', 'बिल जतन करताना एरर'));
     }

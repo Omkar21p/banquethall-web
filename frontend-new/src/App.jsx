@@ -31,7 +31,7 @@ function App() {
             <Route path="/services/:hallId" element={<ServicesPage />} />
             <Route path="/packages/:hallId" element={<PackagesPage />} />
             <Route path="/booking" element={<DateBookingPage />} />
-            
+
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/halls" element={<HallSettings />} />
@@ -39,6 +39,7 @@ function App() {
             <Route path="/admin/packages" element={<AdminPackages />} />
             <Route path="/admin/calendar" element={<AdminCalendar />} />
             <Route path="/admin/bills/new" element={<BillGeneration />} />
+            <Route path="/admin/bills/edit/:billId" element={<BillGeneration />} />
             <Route path="/admin/bills" element={<OlderBookings />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/settings" element={<AdminSettings />} />

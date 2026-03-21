@@ -133,6 +133,7 @@ class Bill(BaseModel):
     pre_booking_amount: int = 0
     total_amount: int
     balance_due: int
+    deposits: List[dict] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Settings(BaseModel):
