@@ -172,9 +172,15 @@ const OlderBookings = () => {
       billItems.push([language === 'en' ? s.name : s.name_mr, s.quantity, `Rs. ${s.price.toLocaleString()}`, `Rs. ${(s.price * s.quantity).toLocaleString()}`]);
     });
 
-    bill.thali_items.forEach(t => {
-      billItems.push([language === 'en' ? t.name : t.name_mr, t.quantity, `Rs. ${t.rate.toLocaleString()}`, `Rs. ${(t.rate * t.quantity).toLocaleString()}`]);
-    });
+    // Thali Package as a single grouped row
+    const thaliPricePerPlate = parseInt(bill.thali_price_per_plate) || 0;
+    const thaliTotalPlates = parseInt(bill.thali_total_plates) || 0;
+    const thaliTotal = thaliPricePerPlate * thaliTotalPlates;
+    if (thaliTotal > 0 || (bill.thali_items && bill.thali_items.length > 0)) {
+      const menuNames = (bill.thali_items || []).map(item => item.name).filter(Boolean).join(', ');
+      const thaliLabel = menuNames ? `Thali Package (${menuNames})` : 'Thali Package';
+      billItems.push([thaliLabel, thaliTotalPlates || '-', `Rs. ${thaliPricePerPlate.toLocaleString()}`, `Rs. ${thaliTotal.toLocaleString()}`]);
+    }
 
     doc.autoTable({
       startY: 75,
@@ -277,9 +283,15 @@ const OlderBookings = () => {
       billItems.push([language === 'en' ? s.name : s.name_mr, s.quantity, `Rs. ${s.price.toLocaleString()}`, `Rs. ${(s.price * s.quantity).toLocaleString()}`]);
     });
 
-    bill.thali_items.forEach(t => {
-      billItems.push([language === 'en' ? t.name : t.name_mr, t.quantity, `Rs. ${t.rate.toLocaleString()}`, `Rs. ${(t.rate * t.quantity).toLocaleString()}`]);
-    });
+    // Thali Package as a single grouped row
+    const thaliPricePerPlate2 = parseInt(bill.thali_price_per_plate) || 0;
+    const thaliTotalPlates2 = parseInt(bill.thali_total_plates) || 0;
+    const thaliTotal2 = thaliPricePerPlate2 * thaliTotalPlates2;
+    if (thaliTotal2 > 0 || (bill.thali_items && bill.thali_items.length > 0)) {
+      const menuNames2 = (bill.thali_items || []).map(item => item.name).filter(Boolean).join(', ');
+      const thaliLabel2 = menuNames2 ? `Thali Package (${menuNames2})` : 'Thali Package';
+      billItems.push([thaliLabel2, thaliTotalPlates2 || '-', `Rs. ${thaliPricePerPlate2.toLocaleString()}`, `Rs. ${thaliTotal2.toLocaleString()}`]);
+    }
 
     doc.autoTable({
       startY: 75,
@@ -544,14 +556,30 @@ const OlderBookings = () => {
                         <td className="border p-2 text-right">₹{(service.price * service.quantity).toLocaleString()}</td>
                       </tr>
                     ))}
-                    {selectedBill.thali_items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="border p-2">{language === 'en' ? item.name : item.name_mr}</td>
-                        <td className="border p-2 text-right">{item.quantity}</td>
-                        <td className="border p-2 text-right">₹{item.rate.toLocaleString()}</td>
-                        <td className="border p-2 text-right">₹{(item.rate * item.quantity).toLocaleString()}</td>
-                      </tr>
-                    ))}
+                    {/* Thali Package - grouped display */}
+                    {((parseInt(selectedBill.thali_price_per_plate) > 0 && parseInt(selectedBill.thali_total_plates) > 0) || (selectedBill.thali_items && selectedBill.thali_items.length > 0)) && (
+                      <>
+                        <tr className="bg-gray-50">
+                          <td className="border p-2 font-bold" colSpan={4}>
+                            {t('Thali Package', 'थाळी पॅकेज')}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="border p-2 pl-4">
+                            {t('Price per plate', 'किंमत प्रति ताट')}
+                            {selectedBill.thali_items && selectedBill.thali_items.length > 0 && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {t('Includes: ', 'समाविष्ट: ')}
+                                {selectedBill.thali_items.map(item => (language === 'en' ? item.name : (item.name_mr || item.name))).join(', ')}
+                              </div>
+                            )}
+                          </td>
+                          <td className="border p-2 text-right">{selectedBill.thali_total_plates || '-'}</td>
+                          <td className="border p-2 text-right">₹{(parseInt(selectedBill.thali_price_per_plate) || 0).toLocaleString()}</td>
+                          <td className="border p-2 text-right">₹{((parseInt(selectedBill.thali_price_per_plate) || 0) * (parseInt(selectedBill.thali_total_plates) || 0)).toLocaleString()}</td>
+                        </tr>
+                      </>
+                    )}
                   </tbody>
                 </table>
 
