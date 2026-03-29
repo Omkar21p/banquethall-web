@@ -518,9 +518,28 @@ const AdminCalendar = () => {
                           <p className="font-semibold text-gray-700">{booking.customer_name}</p>
                           <p className="text-sm text-gray-500">{booking.date} - {booking.event_type}</p>
                           <p className="text-sm text-gray-500">{booking.num_guests} {t('guests', 'पाहुणे')}</p>
+                          {booking.customer_city && (
+                            <p className="text-xs text-gray-400">{booking.customer_city}</p>
+                          )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                           <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">{t('Completed', 'पूर्ण झाले')}</span>
+                          <button
+                            onClick={() => handleEditBooking(booking)}
+                            className="text-[#D4AF37] hover:text-[#B8941F]"
+                            title={t('Edit Booking', 'बुकिंग संपादित करा')}
+                            data-testid={`edit-past-booking-${booking.id}`}
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBooking(booking.id)}
+                            className="text-red-500 hover:text-red-700"
+                            title={t('Delete Booking', 'बुकिंग डिलीट करा')}
+                            data-testid={`delete-past-booking-${booking.id}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </div>
                     </div>
