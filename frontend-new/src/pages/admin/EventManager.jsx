@@ -282,18 +282,79 @@ const EventManager = () => {
         if (!selectedBooking.service_bill) return;
 
         const bill = selectedBooking.service_bill;
-        const shareData = {
-            title: 'Service Bill - Om Lawns',
-            text: `Service Bill for ${selectedBooking.customer_name}\nEvent: ${selectedBooking.date}\nTotal Amount: RS. ${bill.finalAmount.toLocaleString()}`,
-            url: window.location.href
-        };
+
+        // Generate PDF blob for sharing
+        const doc = new jsPDF();
+        doc.setFillColor(128, 0, 0); // Maroon
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text('OM LAWNS & BANQUET HALL', 105, 15, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text('SERVICE INVOICE', 105, 25, { align: 'center' });
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        doc.text(`Customer: ${selectedBooking.customer_name}`, 14, 50);
+        doc.text(`City: ${selectedBooking.customer_city}`, 14, 55);
+        doc.text(`Event Date: ${selectedBooking.date}`, 14, 60);
+
+        doc.text(`Invoice: #SRV-${selectedBooking.id.substring(0, 6).toUpperCase()}`, 196, 50, { align: 'right' });
+        doc.text(`Event Type: ${selectedBooking.event_type}`, 196, 55, { align: 'right' });
+        doc.text(`Bill Date: ${new Date(bill.updatedAt).toLocaleDateString()}`, 196, 60, { align: 'right' });
+
+        const tableData = selectedBooking.event_services.map(s => [
+            s.serviceType,
+            s.providerName,
+            `Rs. ${s.amount.toLocaleString()}`
+        ]);
+
+        doc.autoTable({
+            startY: 70,
+            head: [['Service Type', 'Provider Name', 'Amount']],
+            body: tableData,
+            headStyles: { fillColor: [128, 0, 0] },
+            theme: 'striped'
+        });
+
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(10);
+        doc.text(`Subtotal: Rs. ${bill.subtotal.toLocaleString()}`, 196, finalY, { align: 'right' });
+        doc.text(`Discount: -Rs. ${bill.discount.toLocaleString()}`, 196, finalY + 7, { align: 'right' });
+        doc.text(`Extra Charges: +Rs. ${bill.extraCharges.toLocaleString()}`, 196, finalY + 14, { align: 'right' });
+
+        doc.setFontSize(14);
+        doc.setTextColor(128, 0, 0);
+        doc.text(`Final Amount: Rs. ${bill.finalAmount.toLocaleString()}`, 196, finalY + 25, { align: 'right' });
+
+        if (bill.notes) {
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.text('Notes:', 14, finalY + 35);
+            doc.setFontSize(9);
+            doc.text(bill.notes, 14, finalY + 40, { maxWidth: 180 });
+        }
+
+        const pdfBlob = doc.output('blob');
+        const pdfFile = new File([pdfBlob], `Service_Bill_${selectedBooking.customer_name.replace(/\s+/g, '_')}.pdf`, { type: 'application/pdf' });
 
         try {
-            if (navigator.share) {
-                await navigator.share(shareData);
+            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                await navigator.share({
+                    files: [pdfFile],
+                    title: 'Service Bill - Om Lawns',
+                    text: `Service Bill for ${selectedBooking.customer_name}`
+                });
+            } else if (navigator.share) {
+                // Fallback for sharing text if file sharing is not supported
+                await navigator.share({
+                    title: 'Service Bill',
+                    text: `Service Bill - ${selectedBooking.customer_name}\nTotal: Rs. ${bill.finalAmount.toLocaleString()}`,
+                    url: window.location.href
+                });
             } else {
-                navigator.clipboard.writeText(shareData.text);
-                toast.success(t('Summary copied to clipboard!', 'सारांश क्लिपबोर्डवर कॉपी केला!'));
+                navigator.clipboard.writeText(`Service Bill - ${selectedBooking.customer_name}\nTotal: Rs. ${bill.finalAmount.toLocaleString()}`);
+                toast.success(t('Summary copied to clipboard!', 'सारांश क्लिपबोर्डवर सुरक्षित केला!'));
             }
         } catch (err) {
             console.error('Error sharing:', err);

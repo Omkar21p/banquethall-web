@@ -219,17 +219,115 @@ const OlderBookings = () => {
   };
 
   const handleShareBill = async (bill) => {
-    const text = `Bill Summary from ${bill.hall_name}\n\nCustomer: ${bill.customer_name}\nEvent Date: ${bill.event_date}\nTotal Amt: Rs. ${bill.total_amount.toLocaleString()}\nBalance Due: Rs. ${bill.balance_due.toLocaleString()}\n\nThank you!`;
+    // Generate PDF blob for sharing
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFillColor(128, 0, 0); // Maroon
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text(bill.hall_name.toUpperCase(), 105, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text('FINAL INVOICE', 105, 30, { align: 'center' });
+
+    // Customer Info
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.text(`Customer: ${bill.customer_name}`, 14, 50);
+    doc.text(`City: ${bill.customer_city}`, 14, 56);
+    doc.text(`Event Date: ${bill.event_date}`, 14, 62);
+
+    doc.text(`Invoice: #BILL-${bill.id.substring(0, 6).toUpperCase()}`, 196, 50, { align: 'right' });
+    doc.text(`Event Type: ${bill.event_type}`, 196, 56, { align: 'right' });
+    doc.text(`Guests: ${bill.num_guests}`, 196, 62, { align: 'right' });
+
+    // Main Bill Table
+    const billItems = [
+      [t('Hall Rent', 'हॉल भाडे'), 1, `Rs. ${bill.hall_rent.toLocaleString()}`, `Rs. ${bill.hall_rent.toLocaleString()}`]
+    ];
+
+    if (bill.custom_charges) {
+      bill.custom_charges.forEach(c => {
+        billItems.push([language === 'en' ? c.label : c.label_mr, 1, `Rs. ${c.amount.toLocaleString()}`, `Rs. ${c.amount.toLocaleString()}`]);
+      });
+    }
+
+    bill.services.forEach(s => {
+      billItems.push([language === 'en' ? s.name : s.name_mr, s.quantity, `Rs. ${s.price.toLocaleString()}`, `Rs. ${(s.price * s.quantity).toLocaleString()}`]);
+    });
+
+    bill.thali_items.forEach(t => {
+      billItems.push([language === 'en' ? t.name : t.name_mr, t.quantity, `Rs. ${t.rate.toLocaleString()}`, `Rs. ${(t.rate * t.quantity).toLocaleString()}`]);
+    });
+
+    doc.autoTable({
+      startY: 75,
+      head: [['Description', 'Qty', 'Rate', 'Amount']],
+      body: billItems,
+      headStyles: { fillColor: [128, 0, 0] },
+      theme: 'grid'
+    });
+
+    let finalY = doc.lastAutoTable.finalY + 10;
+
+    // Financials
+    doc.setFontSize(10);
+    doc.text(`Subtotal: Rs. ${bill.total_amount.toLocaleString()}`, 196, finalY, { align: 'right' });
+    if (bill.discount > 0) {
+      doc.text(`Discount: -Rs. ${bill.discount.toLocaleString()}`, 196, finalY + 7, { align: 'right' });
+      finalY += 7;
+    }
+    if (bill.pre_booking_amount > 0) {
+      doc.text(`Pre-Booking: Rs. ${bill.pre_booking_amount.toLocaleString()}`, 196, finalY + 7, { align: 'right' });
+      finalY += 7;
+    }
+
+    doc.setFontSize(14);
+    doc.setTextColor(128, 0, 0);
+    doc.text(`Balance Due: Rs. ${bill.balance_due.toLocaleString()}`, 196, finalY + 15, { align: 'right' });
+
+    // Deposits Table
+    if (bill.deposits && bill.deposits.length > 0) {
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.text('Payment History:', 14, finalY + 30);
+
+      const depData = bill.deposits.map(d => [
+        new Date(d.timestamp).toLocaleDateString(),
+        d.paymentMode,
+        d.description || '-',
+        `Rs. ${d.amount.toLocaleString()}`
+      ]);
+
+      doc.autoTable({
+        startY: finalY + 35,
+        head: [['Date', 'Mode', 'Description', 'Amount']],
+        body: depData,
+        headStyles: { fillColor: [50, 50, 50] },
+        styles: { fontSize: 8 }
+      });
+    }
+
+    const pdfBlob = doc.output('blob');
+    const pdfFile = new File([pdfBlob], `Bill_${bill.customer_name.replace(/\s+/g, '_')}.pdf`, { type: 'application/pdf' });
 
     try {
-      if (navigator.share) {
+      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        await navigator.share({
+          files: [pdfFile],
+          title: `Bill - ${bill.customer_name}`,
+          text: `Final Invoice for ${bill.customer_name} from ${bill.hall_name}`
+        });
+      } else if (navigator.share) {
         await navigator.share({
           title: `Bill - ${bill.customer_name}`,
-          text: text,
+          text: `Bill Summary from ${bill.hall_name}\n\nCustomer: ${bill.customer_name}\nBalance Due: Rs. ${bill.balance_due.toLocaleString()}`,
           url: window.location.href
         });
       } else {
-        await navigator.clipboard.writeText(text);
+        const shareText = `Bill Summary - ${bill.customer_name}\nBalance Due: Rs. ${bill.balance_due.toLocaleString()}`;
+        await navigator.clipboard.writeText(shareText);
         toast.success(t('Summary copied to clipboard!', 'सारांश क्लिपबोर्डवर सुरक्षित केला!'));
       }
     } catch (err) {
