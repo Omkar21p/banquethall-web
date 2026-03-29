@@ -12,8 +12,10 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const EventManager = () => {
-    const { getAuthHeaders } = useAuth();
-    const { t } = useLanguage();
+    const { getAuthHeaders, admin } = useAuth();
+    const { language, t } = useLanguage();
+    const [halls, setHalls] = useState([]);
+    const [selectedHall, setSelectedHall] = useState('');
     const [bookings, setBookings] = useState([]);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [isEditingService, setIsEditingService] = useState(null);
@@ -35,13 +37,29 @@ const EventManager = () => {
     });
 
     useEffect(() => {
+        fetchHalls();
         fetchBookings();
     }, []);
+
+    const fetchHalls = async () => {
+        try {
+            const response = await axios.get(`${API}/halls`);
+            setHalls(response.data);
+            // Default to admin's hall
+            if (admin?.hall_name) {
+                const adminHall = response.data.find(h => h.name === admin.hall_name);
+                if (adminHall) {
+                    setSelectedHall(adminHall.id);
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching halls:', err);
+        }
+    };
 
     const fetchBookings = async () => {
         try {
             const response = await axios.get(`${API}/bookings`, getAuthHeaders());
-            // Filter for only booked status
             setBookings(response.data.filter(b => b.status === 'booked').sort((a, b) => new Date(a.date) - new Date(b.date)));
         } catch (err) {
             console.error('Error fetching bookings:', err);
@@ -463,8 +481,12 @@ const EventManager = () => {
     // Month filter
     const [selectedMonth, setSelectedMonth] = useState('');
 
-    // Get unique months from bookings
-    const availableMonths = [...new Set(bookings.map(b => {
+    // Get unique months from bookings (filtered by hall first)
+    const hallFilteredBookings = selectedHall
+        ? bookings.filter(b => b.hall_id === selectedHall)
+        : bookings;
+
+    const availableMonths = [...new Set(hallFilteredBookings.map(b => {
         const d = new Date(b.date);
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     }))].sort();
@@ -484,15 +506,14 @@ const EventManager = () => {
                 setSelectedMonth(currentMonth);
             }
         }
-    }, [bookings]);
+    }, [bookings, selectedHall]);
 
-    const filteredBookings = selectedMonth
-        ? bookings.filter(b => {
-            const d = new Date(b.date);
-            const bMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            return bMonth === selectedMonth;
-        })
-        : bookings;
+    const filteredBookings = hallFilteredBookings.filter(b => {
+        if (!selectedMonth) return true;
+        const d = new Date(b.date);
+        const bMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        return bMonth === selectedMonth;
+    });
 
     return (
         <AdminLayout>
@@ -501,7 +522,27 @@ const EventManager = () => {
                     <h2 className="playfair text-2xl font-bold maroon-text mb-4">
                         {t('Event Management', 'कार्यक्रम व्यवस्थापन')}
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold maroon-text mb-2">{t('Filter by Hall:', 'हॉलनुसार फिल्टर:')}</label>
+                            <select
+                                value={selectedHall}
+                                onChange={(e) => {
+                                    setSelectedHall(e.target.value);
+                                    setSelectedMonth('');
+                                    setSelectedBooking(null);
+                                    setShowBillView(false);
+                                }}
+                                className="w-full px-4 py-3 border-2 border-[#D4AF37] rounded-lg focus:outline-none bg-white text-gray-800 font-medium"
+                            >
+                                <option value="">{t('All Halls', 'सर्व हॉल')}</option>
+                                {halls.map(hall => (
+                                    <option key={hall.id} value={hall.id}>
+                                        {language === 'en' ? hall.name : hall.name_mr}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <div>
                             <label className="block text-sm font-bold maroon-text mb-2">{t('Filter by Month:', 'महिन्यानुसार फिल्टर:')}</label>
                             <select
@@ -533,10 +574,12 @@ const EventManager = () => {
                             </select>
                         </div>
                     </div>
-                    {selectedMonth && (
+                    {(selectedHall || selectedMonth) && (
                         <p className="text-sm text-gray-500 mt-2">
-                            {t(`Showing ${filteredBookings.length} event(s) for ${getMonthLabel(selectedMonth)}`,
-                                `${getMonthLabel(selectedMonth)} साठी ${filteredBookings.length} कार्यक्रम दर्शवित आहे`)}
+                            {t(`Showing ${filteredBookings.length} event(s)`,
+                                `${filteredBookings.length} कार्यक्रम दर्शवित आहे`)}
+                            {selectedHall && ` • ${halls.find(h => h.id === selectedHall)?.name || ''}`}
+                            {selectedMonth && ` • ${getMonthLabel(selectedMonth)}`}
                         </p>
                     )}
                 </div>
