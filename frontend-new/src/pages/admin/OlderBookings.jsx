@@ -446,20 +446,6 @@ const OlderBookings = () => {
                             </button>
                           )}
                           <button
-                            onClick={() => handleDownloadSingleBillPDF(bill)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title={t('Download PDF', 'PDF डाऊनलोड करा')}
-                          >
-                            <FileDown size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleShareBill(bill)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title={t('Share Bill', 'बिल शेअर करा')}
-                          >
-                            <Share2 size={18} />
-                          </button>
-                          <button
                             onClick={() => navigate(`/admin/bills/edit/${bill.id}`)}
                             className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                             title={t('Edit Bill', 'बिल संपादित करा')}
