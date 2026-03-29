@@ -3,7 +3,7 @@ import AdminLayout from '../../components/AdminLayout';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import axios from 'axios';
-import { Eye, Share2, FileDown, Search, Trash2, Edit } from 'lucide-react';
+import { Eye, Share2, FileDown, Search, Trash2, Edit, Printer, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
@@ -124,6 +124,119 @@ const OlderBookings = () => {
     toast.success(t('PDF exported!', 'PDF एक्सपोर्ट झाले!'));
   };
 
+  const handleDownloadSingleBillPDF = (bill) => {
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFillColor(128, 0, 0); // Maroon
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text(bill.hall_name.toUpperCase(), 105, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text('FINAL INVOICE', 105, 30, { align: 'center' });
+
+    // Customer Info
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.text(`Customer: ${bill.customer_name}`, 14, 50);
+    doc.text(`City: ${bill.customer_city}`, 14, 56);
+    doc.text(`Event Date: ${bill.event_date}`, 14, 62);
+
+    doc.text(`Invoice: #BILL-${bill.id.substring(0, 6).toUpperCase()}`, 196, 50, { align: 'right' });
+    doc.text(`Event Type: ${bill.event_type}`, 196, 56, { align: 'right' });
+    doc.text(`Guests: ${bill.num_guests}`, 196, 62, { align: 'right' });
+
+    // Main Bill Table
+    const billItems = [
+      [t('Hall Rent', 'हॉल भाडे'), 1, `Rs. ${bill.hall_rent.toLocaleString()}`, `Rs. ${bill.hall_rent.toLocaleString()}`]
+    ];
+
+    if (bill.custom_charges) {
+      bill.custom_charges.forEach(c => {
+        billItems.push([language === 'en' ? c.label : c.label_mr, 1, `Rs. ${c.amount.toLocaleString()}`, `Rs. ${c.amount.toLocaleString()}`]);
+      });
+    }
+
+    bill.services.forEach(s => {
+      billItems.push([language === 'en' ? s.name : s.name_mr, s.quantity, `Rs. ${s.price.toLocaleString()}`, `Rs. ${(s.price * s.quantity).toLocaleString()}`]);
+    });
+
+    bill.thali_items.forEach(t => {
+      billItems.push([language === 'en' ? t.name : t.name_mr, t.quantity, `Rs. ${t.rate.toLocaleString()}`, `Rs. ${(t.rate * t.quantity).toLocaleString()}`]);
+    });
+
+    doc.autoTable({
+      startY: 75,
+      head: [['Description', 'Qty', 'Rate', 'Amount']],
+      body: billItems,
+      headStyles: { fillColor: [128, 0, 0] },
+      theme: 'grid'
+    });
+
+    let finalY = doc.lastAutoTable.finalY + 10;
+
+    // Financials
+    doc.setFontSize(10);
+    doc.text(`Subtotal: Rs. ${bill.total_amount.toLocaleString()}`, 196, finalY, { align: 'right' });
+    if (bill.discount > 0) {
+      doc.text(`Discount: -Rs. ${bill.discount.toLocaleString()}`, 196, finalY + 7, { align: 'right' });
+      finalY += 7;
+    }
+    if (bill.pre_booking_amount > 0) {
+      doc.text(`Pre-Booking: Rs. ${bill.pre_booking_amount.toLocaleString()}`, 196, finalY + 7, { align: 'right' });
+      finalY += 7;
+    }
+
+    doc.setFontSize(14);
+    doc.setTextColor(128, 0, 0);
+    doc.text(`Balance Due: Rs. ${bill.balance_due.toLocaleString()}`, 196, finalY + 15, { align: 'right' });
+
+    // Deposits Table
+    if (bill.deposits && bill.deposits.length > 0) {
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.text('Payment History:', 14, finalY + 30);
+
+      const depData = bill.deposits.map(d => [
+        new Date(d.timestamp).toLocaleDateString(),
+        d.paymentMode,
+        d.description || '-',
+        `Rs. ${d.amount.toLocaleString()}`
+      ]);
+
+      doc.autoTable({
+        startY: finalY + 35,
+        head: [['Date', 'Mode', 'Description', 'Amount']],
+        body: depData,
+        headStyles: { fillColor: [50, 50, 50] },
+        styles: { fontSize: 8 }
+      });
+    }
+
+    doc.save(`Bill_${bill.customer_name.replace(/\s+/g, '_')}.pdf`);
+    toast.success(t('PDF Downloaded!', 'PDF डाऊनलोड झाले!'));
+  };
+
+  const handleShareBill = async (bill) => {
+    const text = `Bill Summary from ${bill.hall_name}\n\nCustomer: ${bill.customer_name}\nEvent Date: ${bill.event_date}\nTotal Amt: Rs. ${bill.total_amount.toLocaleString()}\nBalance Due: Rs. ${bill.balance_due.toLocaleString()}\n\nThank you!`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Bill - ${bill.customer_name}`,
+          text: text,
+          url: window.location.href
+        });
+      } else {
+        await navigator.clipboard.writeText(text);
+        toast.success(t('Summary copied to clipboard!', 'सारांश क्लिपबोर्डवर सुरक्षित केला!'));
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -237,20 +350,34 @@ const OlderBookings = () => {
                             </button>
                           )}
                           <button
-                            onClick={() => handleDeleteBill(bill.id)}
-                            className="p-2 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-colors"
-                            title={t('Delete Bill', 'बिल डिलीट करा')}
-                            data-testid={`delete-bill-${bill.id}`}
+                            onClick={() => handleDownloadSingleBillPDF(bill)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title={t('Download PDF', 'PDF डाऊनलोड करा')}
                           >
-                            <Trash2 size={18} />
+                            <FileDown size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleShareBill(bill)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title={t('Share Bill', 'बिल शेअर करा')}
+                          >
+                            <Share2 size={18} />
                           </button>
                           <button
                             onClick={() => navigate(`/admin/bills/edit/${bill.id}`)}
-                            className="p-2 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-colors"
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                             title={t('Edit Bill', 'बिल संपादित करा')}
                             data-testid={`edit-bill-${bill.id}`}
                           >
                             <Edit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBill(bill.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title={t('Delete Bill', 'बिल डिलीट करा')}
+                            data-testid={`delete-bill-${bill.id}`}
+                          >
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </td>
@@ -460,18 +587,28 @@ const OlderBookings = () => {
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
                 <button
                   onClick={() => window.print()}
-                  className="flex-1 py-3 border-2 border-[#800000] text-[#800000] rounded-full hover:bg-gray-50 transition-all"
-                  data-testid="print-bill-btn"
+                  className="py-3 flex items-center justify-center gap-2 border-2 border-[#800000] text-[#800000] rounded-xl hover:bg-gray-50 transition-all font-bold"
                 >
-                  {t('Print', 'प्रिंट')}
+                  <Printer size={18} /> {t('Print', 'प्रिंट')}
+                </button>
+                <button
+                  onClick={() => handleDownloadSingleBillPDF(selectedBill)}
+                  className="py-3 flex items-center justify-center gap-2 border-2 border-blue-600 text-blue-600 rounded-xl hover:bg-blue-50 transition-all font-bold"
+                >
+                  <Download size={18} /> {t('PDF', 'पी़डीएफ')}
+                </button>
+                <button
+                  onClick={() => handleShareBill(selectedBill)}
+                  className="py-3 flex items-center justify-center gap-2 border-2 border-green-600 text-green-600 rounded-xl hover:bg-green-50 transition-all font-bold"
+                >
+                  <Share2 size={18} /> {t('Share', 'शेअर')}
                 </button>
                 <button
                   onClick={() => setSelectedBill(null)}
-                  className="flex-1 py-3 bg-[#800000] text-white rounded-full hover:bg-[#600000] transition-all"
-                  data-testid="close-modal-btn"
+                  className="py-3 bg-[#800000] text-white rounded-xl hover:bg-[#600000] transition-all font-bold"
                 >
                   {t('Close', 'बंद करा')}
                 </button>
