@@ -236,8 +236,18 @@ const EventManager = () => {
         doc.text(`City: ${selectedBooking.customer_city}`, 14, 55);
         doc.text(`Event Date: ${selectedBooking.date}`, 14, 60);
 
+        const eventTypeMap = {
+            'लग्न': 'Wedding',
+            'साखरपुडा': 'Engagement',
+            'सभा (मीटिंग)': 'Meeting',
+            'वाढदिवस': 'Birthday',
+            'इतर': 'Other'
+        };
+        const eventTypeDisplay = eventTypeMap[selectedBooking.event_type] || selectedBooking.event_type;
+
+        doc.setFontSize(9);
         doc.text(`Invoice: #SRV-${selectedBooking.id.substring(0, 6).toUpperCase()}`, 196, 50, { align: 'right' });
-        doc.text(`Event Type: ${selectedBooking.event_type}`, 196, 55, { align: 'right' });
+        doc.text(`Event: ${eventTypeDisplay}`, 196, 55, { align: 'right' });
         doc.text(`Bill Date: ${new Date(bill.updatedAt).toLocaleDateString()}`, 196, 60, { align: 'right' });
 
         // Table
@@ -299,9 +309,18 @@ const EventManager = () => {
         doc.text(`City: ${selectedBooking.customer_city}`, 14, 55);
         doc.text(`Event Date: ${selectedBooking.date}`, 14, 60);
 
+        const eventTypeMap = {
+            'लग्न': 'Wedding',
+            'साखरपुडा': 'Engagement',
+            'सभा (मीटिंग)': 'Meeting',
+            'वाढदिवस': 'Birthday',
+            'इतर': 'Other'
+        };
+        const eventTypeDisplay = eventTypeMap[selectedBooking.event_type] || selectedBooking.event_type;
+
         doc.setFontSize(9);
         doc.text(`Invoice: #SRV-${selectedBooking.id.substring(0, 6).toUpperCase()}`, 196, 50, { align: 'right' });
-        doc.text(`Event: ${selectedBooking.event_type}`, 196, 55, { align: 'right' });
+        doc.text(`Event: ${eventTypeDisplay}`, 196, 55, { align: 'right' });
         doc.text(`Bill Date: ${new Date(bill.updatedAt).toLocaleDateString()}`, 196, 60, { align: 'right' });
 
         const tableData = selectedBooking.event_services.map(s => [

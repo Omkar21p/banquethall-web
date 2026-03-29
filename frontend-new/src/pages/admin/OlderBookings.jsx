@@ -143,8 +143,18 @@ const OlderBookings = () => {
     doc.text(`City: ${bill.customer_city}`, 14, 56);
     doc.text(`Event Date: ${bill.event_date}`, 14, 62);
 
+    const eventTypeMap = {
+      'लग्न': 'Wedding',
+      'साखरपुडा': 'Engagement',
+      'सभा (मीटिंग)': 'Meeting',
+      'वाढदिवस': 'Birthday',
+      'इतर': 'Other'
+    };
+    const eventTypeDisplay = eventTypeMap[bill.event_type] || bill.event_type;
+
+    doc.setFontSize(9);
     doc.text(`Invoice: #BILL-${bill.id.substring(0, 6).toUpperCase()}`, 196, 50, { align: 'right' });
-    doc.text(`Event Type: ${bill.event_type}`, 196, 56, { align: 'right' });
+    doc.text(`Event: ${eventTypeDisplay}`, 196, 56, { align: 'right' });
     doc.text(`Guests: ${bill.num_guests}`, 196, 62, { align: 'right' });
 
     // Main Bill Table
@@ -238,9 +248,18 @@ const OlderBookings = () => {
     doc.text(`City: ${bill.customer_city}`, 14, 56);
     doc.text(`Event Date: ${bill.event_date}`, 14, 62);
 
+    const eventTypeMap = {
+      'लग्न': 'Wedding',
+      'साखरपुडा': 'Engagement',
+      'सभा (मीटिंग)': 'Meeting',
+      'वाढदिवस': 'Birthday',
+      'इतर': 'Other'
+    };
+    const eventTypeDisplay = eventTypeMap[bill.event_type] || bill.event_type;
+
     doc.setFontSize(9);
     doc.text(`Invoice: #BILL-${bill.id.substring(0, 6).toUpperCase()}`, 196, 50, { align: 'right' });
-    doc.text(`Event: ${bill.event_type}`, 196, 56, { align: 'right' });
+    doc.text(`Event: ${eventTypeDisplay}`, 196, 56, { align: 'right' });
     doc.text(`Guests: ${bill.num_guests}`, 196, 62, { align: 'right' });
 
     // Main Bill Table
