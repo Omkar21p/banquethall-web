@@ -216,6 +216,15 @@ const BillGeneration = () => {
     });
   };
 
+  const updateServicePrice = (serviceId, price) => {
+    setBillData({
+      ...billData,
+      services: billData.services.map(s =>
+        s.id === serviceId ? { ...s, price: parseInt(price) || 0 } : s
+      )
+    });
+  };
+
   const removeService = (serviceId) => {
     setBillData({
       ...billData,
@@ -618,13 +627,13 @@ const BillGeneration = () => {
             <div className="mt-6">
               <h3 className="playfair text-xl font-bold maroon-text mb-3">{t('Add Services', 'सेवा जोडा')}</h3>
               <select
-                onChange={(e) => addService(e.target.value)}
+                onChange={(e) => { addService(e.target.value); e.target.value = ''; }}
                 className="w-full px-4 py-2 border-2 border-[#D4AF37] rounded-lg mb-4"
                 defaultValue=""
                 data-testid="add-service-select"
               >
                 <option value="">{t('Select service to add...', 'सेवा निवडा...')}</option>
-                {services.map(service => (
+                {services.filter(s => !billData.services.find(bs => bs.id === s.id)).map(service => (
                   <option key={service.id} value={service.id}>
                     {language === 'en' ? service.name : service.name_mr} - ₹{service.price}
                   </option>
@@ -632,26 +641,63 @@ const BillGeneration = () => {
               </select>
 
               {billData.services.length > 0 && (
-                <div className="space-y-2">
-                  {billData.services.map((service) => (
-                    <div key={service.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                      <span className="flex-1">{language === 'en' ? service.name : service.name_mr}</span>
-                      <input
-                        type="number"
-                        value={service.quantity}
-                        onChange={(e) => updateServiceQuantity(service.id, e.target.value)}
-                        className="w-20 px-2 py-1 border rounded"
-                        min="1"
-                      />
-                      <span className="w-24 text-right">₹{(service.price * service.quantity).toLocaleString()}</span>
-                      <button
-                        onClick={() => removeService(service.id)}
-                        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                      >
-                        {t('Remove', 'काढा')}
-                      </button>
-                    </div>
-                  ))}
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-[#800000] text-white">
+                        <th className="px-3 py-2 text-left">{t('Service Name', 'सेवेचे नाव')}</th>
+                        <th className="px-3 py-2 text-center">{t('Price/Item', 'किंमत/आयटम')}</th>
+                        <th className="px-3 py-2 text-center">{t('Qty', 'प्रमाण')}</th>
+                        <th className="px-3 py-2 text-right">{t('Total', 'एकूण')}</th>
+                        <th className="px-3 py-2 text-center"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {billData.services.map((service) => (
+                        <tr key={service.id} className="border-t hover:bg-gray-50">
+                          <td className="px-3 py-2 font-medium">
+                            {language === 'en' ? service.name : service.name_mr}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <input
+                              type="number"
+                              value={service.price}
+                              onChange={(e) => updateServicePrice(service.id, e.target.value)}
+                              className="w-24 px-2 py-1 border rounded text-center"
+                              min="0"
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <input
+                              type="number"
+                              value={service.quantity}
+                              onChange={(e) => updateServiceQuantity(service.id, e.target.value)}
+                              className="w-20 px-2 py-1 border rounded text-center"
+                              min="1"
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-right font-semibold">
+                            ₹{(service.price * service.quantity).toLocaleString()}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <button
+                              onClick={() => removeService(service.id)}
+                              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                            >
+                              {t('Remove', 'काढा')}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="border-t bg-gray-50 font-bold">
+                        <td colSpan={3} className="px-3 py-2 text-right">{t('Services Total:', 'सेवा एकूण:')}</td>
+                        <td className="px-3 py-2 text-right">
+                          ₹{billData.services.reduce((sum, s) => sum + (s.price * s.quantity), 0).toLocaleString()}
+                        </td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
