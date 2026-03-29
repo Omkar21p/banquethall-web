@@ -460,6 +460,40 @@ const EventManager = () => {
         }
     };
 
+    // Month filter
+    const [selectedMonth, setSelectedMonth] = useState('');
+
+    // Get unique months from bookings
+    const availableMonths = [...new Set(bookings.map(b => {
+        const d = new Date(b.date);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }))].sort();
+
+    const getMonthLabel = (monthStr) => {
+        const [year, month] = monthStr.split('-');
+        const date = new Date(parseInt(year), parseInt(month) - 1);
+        return date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    };
+
+    // Set default month to current month on first load
+    useEffect(() => {
+        if (bookings.length > 0 && !selectedMonth) {
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            if (availableMonths.includes(currentMonth)) {
+                setSelectedMonth(currentMonth);
+            }
+        }
+    }, [bookings]);
+
+    const filteredBookings = selectedMonth
+        ? bookings.filter(b => {
+            const d = new Date(b.date);
+            const bMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            return bMonth === selectedMonth;
+        })
+        : bookings;
+
     return (
         <AdminLayout>
             <div className="space-y-6">
@@ -467,19 +501,44 @@ const EventManager = () => {
                     <h2 className="playfair text-2xl font-bold maroon-text mb-4">
                         {t('Event Management', 'कार्यक्रम व्यवस्थापन')}
                     </h2>
-                    <div>
-                        <label className="block text-sm font-bold maroon-text mb-2">{t('Select Event:', 'कार्यक्रम निवडा:')}</label>
-                        <select
-                            value={selectedBooking?.id || ''}
-                            onChange={(e) => handleBookingSelect(e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-[#D4AF37] rounded-lg focus:outline-none bg-white text-gray-800 font-medium"
-                        >
-                            <option value="">{t('Choose an event...', 'एक कार्यक्रम निवडा...')}</option>
-                            {bookings.map(b => (
-                                <option key={b.id} value={b.id}>{b.date} - {b.customer_name}</option>
-                            ))}
-                        </select>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold maroon-text mb-2">{t('Filter by Month:', 'महिन्यानुसार फिल्टर:')}</label>
+                            <select
+                                value={selectedMonth}
+                                onChange={(e) => {
+                                    setSelectedMonth(e.target.value);
+                                    setSelectedBooking(null);
+                                    setShowBillView(false);
+                                }}
+                                className="w-full px-4 py-3 border-2 border-[#D4AF37] rounded-lg focus:outline-none bg-white text-gray-800 font-medium"
+                            >
+                                <option value="">{t('All Months', 'सर्व महिने')}</option>
+                                {availableMonths.map(m => (
+                                    <option key={m} value={m}>{getMonthLabel(m)}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold maroon-text mb-2">{t('Select Event:', 'कार्यक्रम निवडा:')}</label>
+                            <select
+                                value={selectedBooking?.id || ''}
+                                onChange={(e) => handleBookingSelect(e.target.value)}
+                                className="w-full px-4 py-3 border-2 border-[#D4AF37] rounded-lg focus:outline-none bg-white text-gray-800 font-medium"
+                            >
+                                <option value="">{t('Choose an event...', 'एक कार्यक्रम निवडा...')}</option>
+                                {filteredBookings.map(b => (
+                                    <option key={b.id} value={b.id}>{b.date} - {b.customer_name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
+                    {selectedMonth && (
+                        <p className="text-sm text-gray-500 mt-2">
+                            {t(`Showing ${filteredBookings.length} event(s) for ${getMonthLabel(selectedMonth)}`,
+                                `${getMonthLabel(selectedMonth)} साठी ${filteredBookings.length} कार्यक्रम दर्शवित आहे`)}
+                        </p>
+                    )}
                 </div>
 
                 {selectedBooking && (
