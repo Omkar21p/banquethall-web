@@ -299,8 +299,9 @@ const EventManager = () => {
         doc.text(`City: ${selectedBooking.customer_city}`, 14, 55);
         doc.text(`Event Date: ${selectedBooking.date}`, 14, 60);
 
+        doc.setFontSize(9);
         doc.text(`Invoice: #SRV-${selectedBooking.id.substring(0, 6).toUpperCase()}`, 196, 50, { align: 'right' });
-        doc.text(`Event Type: ${selectedBooking.event_type}`, 196, 55, { align: 'right' });
+        doc.text(`Event: ${selectedBooking.event_type}`, 196, 55, { align: 'right' });
         doc.text(`Bill Date: ${new Date(bill.updatedAt).toLocaleDateString()}`, 196, 60, { align: 'right' });
 
         const tableData = selectedBooking.event_services.map(s => [
@@ -341,9 +342,7 @@ const EventManager = () => {
         try {
             if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
                 await navigator.share({
-                    files: [pdfFile],
-                    title: 'Service Bill - Om Lawns',
-                    text: `Service Bill for ${selectedBooking.customer_name}`
+                    files: [pdfFile]
                 });
             } else if (navigator.share) {
                 // Fallback for sharing text if file sharing is not supported

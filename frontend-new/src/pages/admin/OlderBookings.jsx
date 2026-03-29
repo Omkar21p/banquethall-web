@@ -238,8 +238,9 @@ const OlderBookings = () => {
     doc.text(`City: ${bill.customer_city}`, 14, 56);
     doc.text(`Event Date: ${bill.event_date}`, 14, 62);
 
+    doc.setFontSize(9);
     doc.text(`Invoice: #BILL-${bill.id.substring(0, 6).toUpperCase()}`, 196, 50, { align: 'right' });
-    doc.text(`Event Type: ${bill.event_type}`, 196, 56, { align: 'right' });
+    doc.text(`Event: ${bill.event_type}`, 196, 56, { align: 'right' });
     doc.text(`Guests: ${bill.num_guests}`, 196, 62, { align: 'right' });
 
     // Main Bill Table
@@ -315,15 +316,12 @@ const OlderBookings = () => {
     try {
       if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
         await navigator.share({
-          files: [pdfFile],
-          title: `Bill - ${bill.customer_name}`,
-          text: `Final Invoice for ${bill.customer_name} from ${bill.hall_name}`
+          files: [pdfFile]
         });
       } else if (navigator.share) {
         await navigator.share({
           title: `Bill - ${bill.customer_name}`,
-          text: `Bill Summary from ${bill.hall_name}\n\nCustomer: ${bill.customer_name}\nBalance Due: Rs. ${bill.balance_due.toLocaleString()}`,
-          url: window.location.href
+          text: `Bill Summary - ${bill.customer_name}\nBalance Due: Rs. ${bill.balance_due.toLocaleString()}`
         });
       } else {
         const shareText = `Bill Summary - ${bill.customer_name}\nBalance Due: Rs. ${bill.balance_due.toLocaleString()}`;
