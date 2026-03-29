@@ -133,8 +133,8 @@ const BillGeneration = () => {
   const fetchBookings = async () => {
     if (!billData.hall_id) return;
     try {
-      const response = await axios.get(`${API}/bookings?hall_id=${billData.hall_id}`);
-      setBookings(response.data);
+      const response = await axios.get(`${API}/bookings?hall_id=${billData.hall_id}`, getAuthHeaders());
+      setBookings(response.data.filter(b => b.status === 'booked'));
     } catch (error) {
       console.error('Error fetching bookings:', error);
     }
@@ -153,15 +153,19 @@ const BillGeneration = () => {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) return;
 
+    const hall = halls.find(h => h.id === billData.hall_id);
+
     setBillData(prev => ({
       ...prev,
+      booking_id: booking.id,
       customer_name: booking.customer_name,
       customer_city: booking.customer_city,
       customer_phone: booking.customer_phone,
       booking_date: booking.booking_date ? new Date(booking.booking_date).toISOString().split('T')[0] : '',
       event_date: booking.date,
       event_type: booking.event_type,
-      num_guests: booking.num_guests
+      num_guests: booking.num_guests,
+      hall_rent: hall?.approx_rent || prev.hall_rent
     }));
   };
 
@@ -439,16 +443,16 @@ const BillGeneration = () => {
 
                 {/* Booking Selection */}
                 {billData.hall_id && (
-                  <div className="mt-2">
-                    <label className="block text-xs text-gray-500 mb-1">{t('Select from Bookings (Optional)', 'बुकिंगमधून निवडा (पर्यायी)')}</label>
+                  <div className="mt-3">
+                    <label className="block text-sm font-semibold mb-2">{t('Select from Bookings (Optional)', 'बुकिंगमधून निवडा (पर्यायी)')}</label>
                     <select
                       onChange={(e) => handleBookingSelect(e.target.value)}
-                      className="w-full px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none"
+                      className="w-full px-4 py-2 border-2 border-[#D4AF37] rounded-lg focus:outline-none"
                     >
-                      <option value="">{t('No booking selected', 'बुकिंग निवडलेले नाही')}</option>
-                      {bookings.filter(b => b.hall_id === billData.hall_id).map(booking => (
+                      <option value="">{bookings.length > 0 ? t('Choose a booking...', 'बुकिंग निवडा...') : t('No bookings found for this hall', 'या हॉलसाठी बुकिंग नाही')}</option>
+                      {bookings.map(booking => (
                         <option key={booking.id} value={booking.id}>
-                          {booking.customer_name} - {booking.date}
+                          {booking.date} — {booking.customer_name} ({booking.event_type})
                         </option>
                       ))}
                     </select>
