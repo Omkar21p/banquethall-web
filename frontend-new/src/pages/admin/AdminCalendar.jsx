@@ -26,6 +26,8 @@ const AdminCalendar = () => {
   const [showPastBookings, setShowPastBookings] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePopup, setShowDatePopup] = useState(false);
+  const [popupDate, setPopupDate] = useState(null);
   const [shubhForm, setShubhForm] = useState({
     date: format(new Date(), 'yyyy-MM-dd'),
     occasion: '',
@@ -191,6 +193,56 @@ const AdminCalendar = () => {
     if (isToday(date)) return 'date-today';
     if (isDateShubh(date)) return 'date-shubh';
     return '';
+  };
+
+  const handleDateClick = (date) => {
+    setSelectedDate(date);
+    setPopupDate(date);
+    setShowDatePopup(true);
+  };
+
+  const getBookingsForDate = (date) => {
+    if (!date) return [];
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return bookings.filter(b => b.date === dateStr);
+  };
+
+  const getShubhForDate = (date) => {
+    if (!date) return [];
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return shubhDates.filter(sd => sd.date === dateStr);
+  };
+
+  const handlePopupAddBooking = () => {
+    const dateStr = format(popupDate, 'yyyy-MM-dd');
+    setBookingForm({
+      date: dateStr,
+      customer_name: '',
+      customer_city: '',
+      customer_phone: '',
+      event_type: 'लग्न',
+      num_guests: '',
+      booking_taken_by: ''
+    });
+    setEditingBooking(null);
+    setShowAddBooking(true);
+    setShowDatePopup(false);
+  };
+
+  const handlePopupAddShubh = () => {
+    const dateStr = format(popupDate, 'yyyy-MM-dd');
+    setShubhForm({
+      date: dateStr,
+      occasion: '',
+      occasion_mr: ''
+    });
+    setShowAddShubh(true);
+    setShowDatePopup(false);
+  };
+
+  const handlePopupEditBooking = (booking) => {
+    handleEditBooking(booking);
+    setShowDatePopup(false);
   };
 
   return (
@@ -427,10 +479,10 @@ const AdminCalendar = () => {
             <h3 className="playfair text-xl font-bold maroon-text mb-4">{t('Calendar', 'कॅलेंडर')}</h3>
             <DatePicker
               selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
+              onChange={handleDateClick}
               inline
               dayClassName={getDayClassName}
-              minDate={null} /* Allow admins to see all past dates */
+              minDate={null}
               showDisabledMonthNavigation
               calendarClassName="w-full text-lg"
             />
@@ -553,6 +605,107 @@ const AdminCalendar = () => {
           </div>
         </div>
       </div>
+
+      {/* Date Click Popup */}
+      {showDatePopup && popupDate && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowDatePopup(false)}>
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="text-center mb-4">
+              <h3 className="playfair text-2xl font-bold maroon-text">
+                {format(popupDate, 'dd MMMM yyyy')}
+              </h3>
+              <div className="flex justify-center gap-2 mt-2">
+                {isDateBooked(popupDate) && (
+                  <span className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full font-semibold">{t('Booked', 'बुक केले')}</span>
+                )}
+                {isDateShubh(popupDate) && (
+                  <span className="text-xs bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full font-semibold">{t('Shubh Muhurt', 'शुभ मुहूर्त')}</span>
+                )}
+                {isToday(popupDate) && (
+                  <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">{t('Today', 'आज')}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Existing bookings for this date */}
+            {getBookingsForDate(popupDate).length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-bold text-gray-600 mb-2">{t('Bookings on this date:', 'या तारखेची बुकिंग:')}</h4>
+                {getBookingsForDate(popupDate).map(booking => (
+                  <div key={booking.id} className="p-3 bg-red-50 rounded-lg mb-2 border-l-4 border-red-500">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-semibold">{booking.customer_name}</p>
+                        <p className="text-sm text-gray-600">{booking.event_type} • {booking.num_guests} {t('guests', 'पाहुणे')}</p>
+                        {booking.customer_city && <p className="text-xs text-gray-500">{booking.customer_city}</p>}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handlePopupEditBooking(booking)}
+                          className="text-[#D4AF37] hover:text-[#B8941F] p-1"
+                          title={t('Edit', 'संपादित करा')}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => { handleDeleteBooking(booking.id); setShowDatePopup(false); }}
+                          className="text-red-500 hover:text-red-700 p-1"
+                          title={t('Delete', 'डिलीट करा')}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Existing shubh dates for this date */}
+            {getShubhForDate(popupDate).length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-bold text-gray-600 mb-2">{t('Shubh Muhurt:', 'शुभ मुहूर्त:')}</h4>
+                {getShubhForDate(popupDate).map(sd => (
+                  <div key={sd.id} className="p-3 bg-yellow-50 rounded-lg mb-2 border-l-4 border-[#D4AF37] flex justify-between items-center">
+                    <p className="font-medium text-sm">{language === 'en' ? sd.occasion : sd.occasion_mr}</p>
+                    <button
+                      onClick={() => { handleDeleteShubhDate(sd.id); setShowDatePopup(false); }}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <button
+                onClick={handlePopupAddBooking}
+                className="flex items-center justify-center gap-2 py-3 bg-[#800000] text-white rounded-xl hover:bg-[#600000] transition-all font-bold text-sm"
+              >
+                <Plus size={18} />
+                {t('Add Booking', 'बुकिंग जोडा')}
+              </button>
+              <button
+                onClick={handlePopupAddShubh}
+                className="flex items-center justify-center gap-2 py-3 bg-[#D4AF37] text-white rounded-xl hover:bg-[#B8941F] transition-all font-bold text-sm"
+              >
+                <Plus size={18} />
+                {t('Add Shubh Date', 'शुभ तारीख जोडा')}
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowDatePopup(false)}
+              className="w-full mt-3 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 text-gray-600 font-medium text-sm"
+            >
+              {t('Close', 'बंद करा')}
+            </button>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };
