@@ -3,8 +3,10 @@ import AdminLayout from '../../components/AdminLayout';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import axios from 'axios';
-import { Trash2, Edit2, Plus, Save, FileText, X } from 'lucide-react';
+import { Trash2, Edit2, Plus, Save, FileText, X, Share2, Download, Printer } from 'lucide-react';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -210,6 +212,92 @@ const EventManager = () => {
 
         printWindow.document.write(html);
         printWindow.document.close();
+    };
+
+    const handleDownloadPDF = () => {
+        if (!selectedBooking.service_bill) return;
+
+        const doc = new jsPDF();
+        const bill = selectedBooking.service_bill;
+
+        // Header
+        doc.setFillColor(128, 0, 0); // Maroon
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text('OM LAWNS & BANQUET HALL', 105, 15, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text('SERVICE INVOICE', 105, 25, { align: 'center' });
+
+        // Customer Info
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        doc.text(`Customer: ${selectedBooking.customer_name}`, 14, 50);
+        doc.text(`City: ${selectedBooking.customer_city}`, 14, 55);
+        doc.text(`Event Date: ${selectedBooking.date}`, 14, 60);
+
+        doc.text(`Invoice: #SRV-${selectedBooking.id.substring(0, 6).toUpperCase()}`, 196, 50, { align: 'right' });
+        doc.text(`Event Type: ${selectedBooking.event_type}`, 196, 55, { align: 'right' });
+        doc.text(`Bill Date: ${new Date(bill.updatedAt).toLocaleDateString()}`, 196, 60, { align: 'right' });
+
+        // Table
+        const tableData = selectedBooking.event_services.map(s => [
+            s.serviceType,
+            s.providerName,
+            `Rs. ${s.amount.toLocaleString()}`
+        ]);
+
+        doc.autoTable({
+            startY: 70,
+            head: [['Service Type', 'Provider Name', 'Amount']],
+            body: tableData,
+            headStyles: { fillColor: [128, 0, 0] },
+            theme: 'striped'
+        });
+
+        // Summary
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(10);
+        doc.text(`Subtotal: Rs. ${bill.subtotal.toLocaleString()}`, 196, finalY, { align: 'right' });
+        doc.text(`Discount: -Rs. ${bill.discount.toLocaleString()}`, 196, finalY + 7, { align: 'right' });
+        doc.text(`Extra Charges: +Rs. ${bill.extraCharges.toLocaleString()}`, 196, finalY + 14, { align: 'right' });
+
+        doc.setFontSize(14);
+        doc.setTextColor(128, 0, 0);
+        doc.text(`Final Amount: Rs. ${bill.finalAmount.toLocaleString()}`, 196, finalY + 25, { align: 'right' });
+
+        if (bill.notes) {
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.text('Notes:', 14, finalY + 35);
+            doc.setFontSize(9);
+            doc.text(bill.notes, 14, finalY + 40, { maxWidth: 180 });
+        }
+
+        doc.save(`Service_Bill_${selectedBooking.customer_name.replace(/\s+/g, '_')}.pdf`);
+        toast.success(t('PDF Downloaded!', 'PDF डाऊनलोड झाले!'));
+    };
+
+    const handleShareBill = async () => {
+        if (!selectedBooking.service_bill) return;
+
+        const bill = selectedBooking.service_bill;
+        const shareData = {
+            title: 'Service Bill - Om Lawns',
+            text: `Service Bill for ${selectedBooking.customer_name}\nEvent: ${selectedBooking.date}\nTotal Amount: RS. ${bill.finalAmount.toLocaleString()}`,
+            url: window.location.href
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                navigator.clipboard.writeText(shareData.text);
+                toast.success(t('Summary copied to clipboard!', 'सारांश क्लिपबोर्डवर कॉपी केला!'));
+            }
+        } catch (err) {
+            console.error('Error sharing:', err);
+        }
     };
 
     const handleDeleteService = async (index) => {
@@ -521,7 +609,7 @@ const EventManager = () => {
                                             {t('Last Updated:', 'शेवटचे अद्यतन:')} {new Date(selectedBooking.service_bill.updatedAt).toLocaleDateString()}
                                         </span>
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 border-b pb-4">
                                         <div className="flex justify-between"><span className="text-gray-600">{t('Subtotal', 'उपएकूण')}</span><span className="font-bold text-lg">₹{selectedBooking.service_bill.subtotal?.toLocaleString()}</span></div>
                                         <div className="flex justify-between text-red-600"><span className="opacity-80">{t('Discount', 'सूट')}</span><span className="font-bold">-₹{selectedBooking.service_bill.discount?.toLocaleString()}</span></div>
                                         <div className="flex justify-between text-blue-600"><span className="opacity-80">{t('Extra Charges', 'जादा चार्जेस')}</span><span className="font-bold">+₹{selectedBooking.service_bill.extraCharges?.toLocaleString()}</span></div>
@@ -534,6 +622,32 @@ const EventManager = () => {
                                                 "{selectedBooking.service_bill.notes}"
                                             </div>
                                         )}
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 mt-4">
+                                        <button
+                                            onClick={() => setShowBillView(true)}
+                                            className="flex items-center justify-center gap-2 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition font-bold"
+                                        >
+                                            <Edit2 size={16} /> {t('Edit Bill', 'संपादन करा')}
+                                        </button>
+                                        <button
+                                            onClick={handlePrintServiceBill}
+                                            className="flex items-center justify-center gap-2 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-bold"
+                                        >
+                                            <Printer size={16} /> {t('Print', 'प्रिंट')}
+                                        </button>
+                                        <button
+                                            onClick={handleDownloadPDF}
+                                            className="flex items-center justify-center gap-2 py-2 bg-[#D4AF37]/10 text-[#800000] rounded-lg hover:bg-[#D4AF37]/20 transition font-bold"
+                                        >
+                                            <Download size={16} /> {t('PDF', 'पी़डीएफ')}
+                                        </button>
+                                        <button
+                                            onClick={handleShareBill}
+                                            className="flex items-center justify-center gap-2 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition font-bold"
+                                        >
+                                            <Share2 size={16} /> {t('Share', 'शेअर')}
+                                        </button>
                                     </div>
                                 </div>
                             )}
