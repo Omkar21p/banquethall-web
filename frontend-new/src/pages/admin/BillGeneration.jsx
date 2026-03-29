@@ -22,6 +22,7 @@ const BillGeneration = () => {
   const [services, setServices] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
   const billPreviewRef = useRef(null);
+  const isLoadingBill = useRef(false);
   const [billData, setBillData] = useState({
     hall_id: '',
     hall_name: '',
@@ -57,12 +58,34 @@ const BillGeneration = () => {
 
   const fetchBill = async () => {
     try {
+      isLoadingBill.current = true;
       const response = await axios.get(`${API}/bills`, getAuthHeaders());
       const bill = response.data.find(b => b.id === billId);
       if (bill) {
-        setBillData(bill);
+        // Ensure all fields have safe defaults for old bills
+        setBillData({
+          ...bill,
+          thali_price_per_plate: bill.thali_price_per_plate || '',
+          thali_total_plates: bill.thali_total_plates || '',
+          hall_rent: bill.hall_rent || '',
+          discount: bill.discount || '0',
+          pre_booking_amount: bill.pre_booking_amount || '0',
+          services: bill.services || [],
+          thali_items: bill.thali_items || [],
+          custom_charges: bill.custom_charges || [],
+          deposits: bill.deposits || [],
+          show_hall_rent: bill.show_hall_rent !== undefined ? bill.show_hall_rent : true,
+          // Preserve the stored totals
+          total_amount: bill.total_amount,
+          balance_due: bill.balance_due
+        });
+        // Allow one render cycle to complete before enabling auto-calc
+        setTimeout(() => { isLoadingBill.current = false; }, 500);
+      } else {
+        isLoadingBill.current = false;
       }
     } catch (error) {
+      isLoadingBill.current = false;
       console.error('Error fetching bill:', error);
       toast.error(t('Error loading bill', 'बिल लोड करताना एरर'));
     }
@@ -143,6 +166,8 @@ const BillGeneration = () => {
   };
 
   const calculateTotal = () => {
+    // Skip auto calculation during initial bill load to preserve stored totals
+    if (isLoadingBill.current) return;
     // Skip auto calculation if manual override is enabled
     if (billData.manual_total && billData.manual_balance) return;
 
