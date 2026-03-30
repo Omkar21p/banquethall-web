@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import axios from 'axios';
 import { ArrowLeft, Calendar, Globe } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { format } from 'date-fns';
@@ -11,6 +12,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const DateBookingPage = () => {
+  const { hallId } = useParams();
   const navigate = useNavigate();
   const { language, toggleLanguage, t } = useLanguage();
   const [halls, setHalls] = useState([]);
@@ -34,7 +36,9 @@ const DateBookingPage = () => {
     try {
       const response = await axios.get(`${API}/halls`);
       setHalls(response.data);
-      if (response.data.length > 0) {
+      if (hallId) {
+        setSelectedHall(hallId);
+      } else if (response.data.length > 0) {
         setSelectedHall(response.data[0].id);
       }
     } catch (error) {
@@ -89,28 +93,16 @@ const DateBookingPage = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
-      <nav className="bg-white shadow-md fixed w-full z-50 top-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20 items-center">
-            <div className="flex items-center gap-4">
-              <button onClick={() => navigate('/')} className="text-[#800000] hover:text-[#600000]" data-testid="back-btn">
-                <ArrowLeft size={24} />
-              </button>
-              <h1 className="playfair text-2xl font-bold maroon-text">
-                {t('Check Availability', 'उपलब्धता तपासा')}
-              </h1>
-            </div>
-            <button
-              onClick={toggleLanguage}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-[#D4AF37] text-[#800000] hover:bg-[#D4AF37] hover:text-white transition-all"
-              data-testid="language-toggle-btn"
-            >
-              <Globe size={20} />
-              {language === 'en' ? 'मराठी' : 'English'}
-            </button>
-          </div>
-        </div>
-      </nav>
+      <PageHeader
+        title={t('Check Availability', 'उपलब्धता तपासा')}
+        onBack={() => {
+          if (hallId) {
+            navigate(`/hall/${hallId}`);
+          } else {
+            navigate('/');
+          }
+        }}
+      />
 
       <div className="pt-24 pb-12">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">

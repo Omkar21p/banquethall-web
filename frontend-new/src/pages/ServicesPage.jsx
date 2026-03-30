@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import axios from 'axios';
 import { ArrowLeft, IndianRupee, Globe } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -41,37 +42,10 @@ const ServicesPage = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
-      <nav className="bg-white shadow-md fixed w-full z-50 top-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20 items-center">
-            <div className="flex items-center gap-4">
-              <button onClick={() => navigate('/')} className="text-[#800000] hover:text-[#600000]" data-testid="back-btn">
-                <ArrowLeft size={24} />
-              </button>
-              <h1 className="playfair text-2xl font-bold maroon-text">
-                {language === 'en' ? hall.name : hall.name_mr}
-              </h1>
-            </div>
-            <div className="flex gap-4 items-center">
-              <button
-                onClick={toggleLanguage}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-[#D4AF37] text-[#800000] hover:bg-[#D4AF37] hover:text-white transition-all"
-                data-testid="language-toggle-btn"
-              >
-                <Globe size={20} />
-                {language === 'en' ? 'मराठी' : 'English'}
-              </button>
-              <button
-                onClick={() => navigate(`/packages/${hallId}`)}
-                className="px-6 py-2 rounded-full bg-[#800000] text-white hover:bg-[#600000] transition-all"
-                data-testid="view-packages-btn"
-              >
-                {t('View Packages', 'पॅकेजेस पहा')}
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <PageHeader
+        title={language === 'en' ? hall.name : hall.name_mr}
+        onBack={() => navigate(`/hall/${hallId}`)}
+      />
 
       <div className="pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

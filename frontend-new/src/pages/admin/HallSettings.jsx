@@ -23,7 +23,8 @@ const HallSettings = () => {
     image_url: '',
     logo: '',
     description: '',
-    description_mr: ''
+    description_mr: '',
+    gallery_images: []
   });
 
   useEffect(() => {
@@ -43,7 +44,8 @@ const HallSettings = () => {
           image_url: hall.image_url,
           logo: hall.logo || '',
           description: hall.description || '',
-          description_mr: hall.description_mr || ''
+          description_mr: hall.description_mr || '',
+          gallery_images: hall.gallery_images || []
         });
       }
     }
@@ -96,6 +98,42 @@ const HallSettings = () => {
       fetchHalls();
     } catch (error) {
       toast.error(t('Error saving settings', 'सेटिंग्ज जतन करताना एरर'));
+    }
+  };
+
+  const handleMainImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const response = await axios.post(`${API}/upload-image`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data', ...getAuthHeaders().headers }
+      });
+      setHallData(prev => ({ ...prev, image_url: response.data.image_data }));
+      toast.success(t('Main image uploaded!', 'मुख्य इमेज अपलोड झाली!'));
+    } catch (error) {
+      toast.error(t('Error uploading image', 'इमेज अपलोड करताना एरर'));
+    }
+  };
+
+  const handleGalleryImagesUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    try {
+      const newImages = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await axios.post(`${API}/upload-image`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data', ...getAuthHeaders().headers }
+        });
+        newImages.push(response.data.image_data);
+      }
+      setHallData(prev => ({ ...prev, gallery_images: [...(prev.gallery_images || []), ...newImages] }));
+      toast.success(t(`${newImages.length} images uploaded!`, `${newImages.length} इमेजेस अपलोड झाल्या!`));
+    } catch (error) {
+      toast.error(t('Error uploading images', 'इमेजेस अपलोड करताना एरर'));
     }
   };
 
@@ -155,6 +193,75 @@ const HallSettings = () => {
               <p className="text-sm text-gray-600 mt-2">
                 {t('Logo will appear on bills and invoices', 'लोगो बिल आणि इनव्हॉइसवर दिसेल')}
               </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4 border-t border-b py-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  {t('Main Hall Photo', 'हॉलचा मुख्य फोटो')}
+                </label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleMainImageUpload}
+                    className="hidden"
+                    id="main-image-upload"
+                  />
+                  <label
+                    htmlFor="main-image-upload"
+                    className="flex items-center gap-2 px-6 py-2 bg-[#D4AF37] text-white rounded-full hover:bg-[#B8941F] cursor-pointer"
+                  >
+                    <Upload size={16} />
+                    {t('Upload Main Photo', 'मुख्य फोटो अपलोड करा')}
+                  </label>
+                </div>
+                {hallData.image_url && (
+                  <img src={hallData.image_url} alt="Main" className="mt-3 h-32 w-full object-cover rounded-lg border" />
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  {t('Photo Gallery', 'फोटो गॅलरी')}
+                </label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleGalleryImagesUpload}
+                    className="hidden"
+                    id="gallery-images-upload"
+                  />
+                  <label
+                    htmlFor="gallery-images-upload"
+                    className="flex items-center gap-2 px-6 py-2 bg-[#D4AF37] text-white rounded-full hover:bg-[#B8941F] cursor-pointer"
+                  >
+                    <Upload size={16} />
+                    {t('Add Gallery Photos', 'गॅलरी फोटो जोडा')}
+                  </label>
+                </div>
+                {hallData.gallery_images && hallData.gallery_images.length > 0 && (
+                  <div className="flex gap-2 flex-wrap mt-3">
+                    {hallData.gallery_images.map((img, idx) => (
+                      <div key={idx} className="relative">
+                        <img src={img} alt={`Gallery ${idx}`} className="h-16 w-16 object-cover rounded-lg border" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = hallData.gallery_images.filter((_, i) => i !== idx);
+                            setHallData({ ...hallData, gallery_images: updated });
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 text-xs w-5 h-5 flex items-center justify-center"
+                        >
+                          X
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">

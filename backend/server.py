@@ -66,6 +66,7 @@ class Hall(BaseModel):
     logo: Optional[str] = None
     description: Optional[str] = None
     description_mr: Optional[str] = None
+    gallery_images: list[str] = []
 
 class Service(BaseModel):
     model_config = ConfigDict(extra="ignore")

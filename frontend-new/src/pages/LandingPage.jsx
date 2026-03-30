@@ -26,7 +26,7 @@ const LandingPage = () => {
   };
 
   const handleHallSelect = (hallId) => {
-    navigate(`/services/${hallId}`);
+    navigate(`/hall/${hallId}`);
   };
 
   return (
@@ -47,7 +47,9 @@ const LandingPage = () => {
                 {language === 'en' ? 'मराठी' : 'English'}
               </button>
               <button
-                onClick={() => navigate('/booking')}
+                onClick={() => {
+                  document.getElementById('halls-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 className="px-4 py-1.5 md:px-6 md:py-2 text-sm md:text-base rounded-full bg-[#800000] text-white hover:bg-[#600000] transition-all"
                 data-testid="check-dates-btn"
               >
@@ -82,7 +84,7 @@ const LandingPage = () => {
 
         <section className="py-16 bg-[#FDFBF7]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h3 className="playfair text-4xl font-bold text-center maroon-text mb-12" data-testid="halls-section-title">
+            <h3 id="halls-section" className="playfair text-4xl font-bold text-center maroon-text mb-12" data-testid="halls-section-title">
               {t('Our Banquet Halls', 'आमचे बॅन्क्वेट हॉल')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

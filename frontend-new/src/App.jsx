@@ -5,8 +5,10 @@ import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from './components/ui/sonner';
 
 import LandingPage from './pages/LandingPage';
+import HallDashboardPage from './pages/HallDashboardPage';
 import ServicesPage from './pages/ServicesPage';
 import PackagesPage from './pages/PackagesPage';
+import PhotoGalleryPage from './pages/PhotoGalleryPage';
 import DateBookingPage from './pages/DateBookingPage';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -29,9 +31,11 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/hall/:hallId" element={<HallDashboardPage />} />
             <Route path="/services/:hallId" element={<ServicesPage />} />
             <Route path="/packages/:hallId" element={<PackagesPage />} />
-            <Route path="/booking" element={<DateBookingPage />} />
+            <Route path="/gallery/:hallId" element={<PhotoGalleryPage />} />
+            <Route path="/booking/:hallId" element={<DateBookingPage />} />
 
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
