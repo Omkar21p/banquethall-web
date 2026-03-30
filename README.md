@@ -1,5 +1,6 @@
 Website Architecture
 
+```mermaid
 graph TB
     subgraph Frontend["Frontend (Vite + React)"]
         LP[Landing Page]
@@ -44,10 +45,11 @@ graph TB
     API --> AUTH
     API --> Database
     SEED -->|Init| Database
-
+```
 
 Sequence Diagram
 
+```mermaid
 sequenceDiagram
     participant Admin
     participant Frontend
@@ -68,3 +70,4 @@ sequenceDiagram
     Backend->>Backend: Decode JWT
     Backend->>MongoDB: Fetch Hall-Specific Data
     Backend-->>Frontend: Data Response
+```
