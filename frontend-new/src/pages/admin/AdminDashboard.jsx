@@ -9,7 +9,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const AdminDashboard = () => {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, admin } = useAuth();
   const { t } = useLanguage();
   const [stats, setStats] = useState({
     totalBookings: 0,
@@ -24,21 +24,34 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const [bookingsRes, billsRes] = await Promise.all([
+      const [hallsRes, bookingsRes, billsRes] = await Promise.all([
+        axios.get(`${API}/halls`),
         axios.get(`${API}/bookings`, getAuthHeaders()),
         axios.get(`${API}/bills`, getAuthHeaders())
       ]);
 
+      // Find the admin's hall ID
+      const adminHall = hallsRes.data.find(h => h.name === admin?.hall_name);
+      const adminHallId = adminHall?.id;
+
+      // Filter by admin's hall
+      const hallBookings = adminHallId
+        ? bookingsRes.data.filter(b => b.hall_id === adminHallId)
+        : bookingsRes.data;
+      const hallBills = adminHallId
+        ? billsRes.data.filter(b => b.hall_id === adminHallId)
+        : billsRes.data;
+
       const today = new Date();
-      const upcomingEvents = bookingsRes.data.filter(
+      const upcomingEvents = hallBookings.filter(
         b => new Date(b.date) >= today
       ).length;
 
-      const revenue = billsRes.data.reduce((sum, bill) => sum + (bill.total_amount || 0), 0);
+      const revenue = hallBills.reduce((sum, bill) => sum + (bill.total_amount || 0), 0);
 
       setStats({
-        totalBookings: bookingsRes.data.length,
-        totalBills: billsRes.data.length,
+        totalBookings: hallBookings.length,
+        totalBills: hallBills.length,
         upcomingEvents,
         revenue
       });
