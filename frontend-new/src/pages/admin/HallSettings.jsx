@@ -90,6 +90,7 @@ const HallSettings = () => {
     try {
       const payload = {
         ...hallData,
+        id: selectedHall,
         capacity: parseInt(hallData.capacity),
         approx_rent: parseInt(hallData.approx_rent)
       };
