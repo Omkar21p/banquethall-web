@@ -47,9 +47,7 @@ const LandingPage = () => {
                 {language === 'en' ? 'मराठी' : 'English'}
               </button>
               <button
-                onClick={() => {
-                  document.getElementById('halls-section')?.scrollIntoView({ behavior: 'smooth' });
-                }}
+                onClick={() => navigate('/booking')}
                 className="px-4 py-1.5 md:px-6 md:py-2 text-sm md:text-base rounded-full bg-[#800000] text-white hover:bg-[#600000] transition-all"
                 data-testid="check-dates-btn"
               >

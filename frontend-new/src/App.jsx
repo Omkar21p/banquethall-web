@@ -35,6 +35,7 @@ function App() {
             <Route path="/services/:hallId" element={<ServicesPage />} />
             <Route path="/packages/:hallId" element={<PackagesPage />} />
             <Route path="/gallery/:hallId" element={<PhotoGalleryPage />} />
+            <Route path="/booking" element={<DateBookingPage />} />
             <Route path="/booking/:hallId" element={<DateBookingPage />} />
 
             <Route path="/admin/login" element={<AdminLogin />} />
