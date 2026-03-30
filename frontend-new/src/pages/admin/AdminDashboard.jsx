@@ -24,19 +24,12 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const [hallsRes, bookingsRes, billsRes] = await Promise.all([
-        axios.get(`${API}/halls`),
+      const [bookingsRes, billsRes] = await Promise.all([
         axios.get(`${API}/bookings`, getAuthHeaders()),
         axios.get(`${API}/bills`, getAuthHeaders())
       ]);
 
-      // Find the admin's hall ID using flexible matching
-      const adminHallName = (admin?.hall_name || '').toLowerCase();
-      const adminHall = hallsRes.data.find(h => {
-        const hallName = h.name.toLowerCase();
-        return hallName === adminHallName || hallName.includes(adminHallName) || adminHallName.includes(hallName);
-      });
-      const adminHallId = adminHall?.id;
+      const adminHallId = admin?.hall_id;
 
       // Filter by admin's hall
       const hallBookings = adminHallId

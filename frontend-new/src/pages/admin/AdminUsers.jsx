@@ -18,7 +18,7 @@ const AdminUsers = () => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    hall_name: ''
+    hall_id: ''
   });
 
   useEffect(() => {
@@ -47,9 +47,14 @@ const AdminUsers = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/admins`, formData, getAuthHeaders());
+      const selectedHall = halls.find(h => h.id === formData.hall_id);
+      await axios.post(`${API}/admins`, {
+        ...formData,
+        hall_name: selectedHall?.name || '',
+        hall_id: formData.hall_id
+      }, getAuthHeaders());
       toast.success(t('Admin added successfully!', 'प्रशासक यशस्वीपणे जोडला!'));
-      setFormData({ username: '', password: '', hall_name: '' });
+      setFormData({ username: '', password: '', hall_id: '' });
       setShowAddForm(false);
       fetchAdmins();
     } catch (error) {
@@ -120,17 +125,17 @@ const AdminUsers = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1">{t('Hall Name', 'हॉल नाव')}</label>
+                <label className="block text-sm font-semibold mb-1">{t('Select Hall', 'हॉल निवडा')}</label>
                 <select
-                  value={formData.hall_name}
-                  onChange={(e) => setFormData({ ...formData, hall_name: e.target.value })}
+                  value={formData.hall_id}
+                  onChange={(e) => setFormData({ ...formData, hall_id: e.target.value })}
                   className="w-full px-4 py-2 border rounded-lg"
                   required
                   data-testid="admin-hall-input"
                 >
                   <option value="">{t('Select Hall...', 'हॉल निवडा...')}</option>
                   {halls.map(hall => (
-                    <option key={hall.id} value={hall.name}>{hall.name}</option>
+                    <option key={hall.id} value={hall.id}>{hall.name}</option>
                   ))}
                 </select>
               </div>

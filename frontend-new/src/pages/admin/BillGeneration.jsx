@@ -120,12 +120,8 @@ const BillGeneration = () => {
       const response = await axios.get(`${API}/halls`);
       setHalls(response.data);
       // Auto-select admin's hall for new bills
-      if (!billId && !billData.hall_id && admin?.hall_name) {
-        const adminHallName = admin.hall_name.toLowerCase();
-        const adminHall = response.data.find(h => {
-          const hallName = h.name.toLowerCase();
-          return hallName === adminHallName || hallName.includes(adminHallName) || adminHallName.includes(hallName);
-        });
+      if (!billId && !billData.hall_id && admin?.hall_id) {
+        const adminHall = response.data.find(h => h.id === admin.hall_id);
         if (adminHall) {
           setBillData(prev => ({ ...prev, hall_id: adminHall.id, hall_name: adminHall.name }));
         }

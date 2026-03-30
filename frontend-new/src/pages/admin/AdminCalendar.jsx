@@ -59,17 +59,8 @@ const AdminCalendar = () => {
       const response = await axios.get(`${API}/halls`);
       setHalls(response.data);
       // Default to admin's hall
-      if (admin?.hall_name) {
-        const adminHallName = admin.hall_name.toLowerCase();
-        const adminHall = response.data.find(h => {
-          const hallName = h.name.toLowerCase();
-          return hallName === adminHallName || hallName.includes(adminHallName) || adminHallName.includes(hallName);
-        });
-        if (adminHall) {
-          setSelectedHall(adminHall.id);
-        } else if (response.data.length > 0) {
-          setSelectedHall(response.data[0].id);
-        }
+      if (admin?.hall_id) {
+        setSelectedHall(admin.hall_id);
       } else if (response.data.length > 0) {
         setSelectedHall(response.data[0].id);
       }

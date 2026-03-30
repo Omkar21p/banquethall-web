@@ -35,6 +35,7 @@ class Admin(BaseModel):
     username: str
     password_hash: str
     hall_name: str
+    hall_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class AdminLogin(BaseModel):
@@ -42,9 +43,12 @@ class AdminLogin(BaseModel):
     password: str
 
 class AdminResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     id: str
     username: str
     hall_name: str
+    hall_id: Optional[str] = None
+    created_at: Optional[datetime] = None
 
 class ChangePassword(BaseModel):
     old_password: str
@@ -187,7 +191,8 @@ async def login(admin_login: AdminLogin):
         "admin": {
             "id": admin["id"],
             "username": admin["username"],
-            "hall_name": admin["hall_name"]
+            "hall_name": admin["hall_name"],
+            "hall_id": admin.get("hall_id", "")
         }
     }
 
@@ -211,10 +216,19 @@ async def create_admin(admin_data: dict, admin=Depends(get_current_admin)):
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
     
+    # Resolve hall_name from hall_id if provided
+    hall_name = admin_data.get("hall_name", "")
+    hall_id = admin_data.get("hall_id", "")
+    if hall_id and not hall_name:
+        hall = await db.halls.find_one({"id": hall_id}, {"_id": 0})
+        if hall:
+            hall_name = hall["name"]
+    
     new_admin = Admin(
         username=admin_data["username"],
         password_hash=hash_password(admin_data["password"]),
-        hall_name=admin_data["hall_name"]
+        hall_name=hall_name,
+        hall_id=hall_id
     )
     await db.admins.insert_one(new_admin.model_dump())
     return {"message": "Admin created successfully", "id": new_admin.id}
@@ -242,6 +256,11 @@ async def get_hall(hall_id: str):
 @api_router.put("/halls/{hall_id}")
 async def update_hall(hall_id: str, hall: Hall, admin=Depends(get_current_admin)):
     await db.halls.update_one({"id": hall_id}, {"$set": hall.model_dump()})
+    # Also update hall_name on all admins linked to this hall
+    await db.admins.update_many(
+        {"hall_id": hall_id},
+        {"$set": {"hall_name": hall.name}}
+    )
     return {"message": "Hall updated successfully"}
 
 @api_router.get("/services", response_model=List[Service])
@@ -414,27 +433,7 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup_event():
-    admin1_exists = await db.admins.find_one({"username": "om_admin"})
-    admin2_exists = await db.admins.find_one({"username": "shiv_admin"})
-    
-    if not admin1_exists:
-        admin1 = Admin(
-            username="om_admin",
-            password_hash=hash_password("om123"),
-            hall_name="Om Lawns Banquet Hall"
-        )
-        await db.admins.insert_one(admin1.model_dump())
-        logger.info("Created default admin: om_admin / om123")
-    
-    if not admin2_exists:
-        admin2 = Admin(
-            username="shiv_admin",
-            password_hash=hash_password("shiv123"),
-            hall_name="Shiv Lawns Banquet Hall"
-        )
-        await db.admins.insert_one(admin2.model_dump())
-        logger.info("Created default admin: shiv_admin / shiv123")
-    
+    # Ensure halls exist first so we can get their IDs
     halls_count = await db.halls.count_documents({})
     if halls_count == 0:
         halls_data = [
@@ -462,6 +461,51 @@ async def startup_event():
         for hall in halls_data:
             await db.halls.insert_one(hall.model_dump())
         logger.info("Created default halls")
+
+    # Get hall IDs for admin creation
+    om_hall = await db.halls.find_one({"name": {"$regex": "Om", "$options": "i"}}, {"_id": 0})
+    shiv_hall = await db.halls.find_one({"name": {"$regex": "Shiv", "$options": "i"}}, {"_id": 0})
+
+    admin1_exists = await db.admins.find_one({"username": "om_admin"})
+    admin2_exists = await db.admins.find_one({"username": "shiv_admin"})
+    
+    if not admin1_exists:
+        admin1 = Admin(
+            username="om_admin",
+            password_hash=hash_password("om123"),
+            hall_name=om_hall["name"] if om_hall else "Om Lawns Banquet Hall",
+            hall_id=om_hall["id"] if om_hall else ""
+        )
+        await db.admins.insert_one(admin1.model_dump())
+        logger.info("Created default admin: om_admin / om123")
+    
+    if not admin2_exists:
+        admin2 = Admin(
+            username="shiv_admin",
+            password_hash=hash_password("shiv123"),
+            hall_name=shiv_hall["name"] if shiv_hall else "Shiv Lawns Banquet Hall",
+            hall_id=shiv_hall["id"] if shiv_hall else ""
+        )
+        await db.admins.insert_one(admin2.model_dump())
+        logger.info("Created default admin: shiv_admin / shiv123")
+
+    # Migration: backfill hall_id for existing admins that don't have it
+    all_halls = await db.halls.find({}, {"_id": 0}).to_list(100)
+    admins_without_hall_id = await db.admins.find(
+        {"$or": [{"hall_id": {"$exists": False}}, {"hall_id": None}, {"hall_id": ""}]},
+        {"_id": 0}
+    ).to_list(100)
+    for adm in admins_without_hall_id:
+        adm_hall_name = adm.get("hall_name", "").lower()
+        for h in all_halls:
+            h_name = h["name"].lower()
+            if h_name == adm_hall_name or h_name in adm_hall_name or adm_hall_name in h_name:
+                await db.admins.update_one(
+                    {"id": adm["id"]},
+                    {"$set": {"hall_id": h["id"], "hall_name": h["name"]}}
+                )
+                logger.info(f"Migrated admin {adm['username']} -> hall_id {h['id']}")
+                break
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
