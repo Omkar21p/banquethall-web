@@ -10,7 +10,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const AdminServices = () => {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, admin } = useAuth();
   const { language, t } = useLanguage();
   const [halls, setHalls] = useState([]);
   const [selectedHall, setSelectedHall] = useState('');
@@ -40,7 +40,9 @@ const AdminServices = () => {
     try {
       const response = await axios.get(`${API}/halls`);
       setHalls(response.data);
-      if (response.data.length > 0) {
+      if (admin?.hall_id) {
+        setSelectedHall(admin.hall_id);
+      } else if (response.data.length > 0) {
         setSelectedHall(response.data[0].id);
       }
     } catch (error) {
