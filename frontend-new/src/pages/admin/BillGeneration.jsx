@@ -13,7 +13,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const BillGeneration = () => {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, admin } = useAuth();
   const { language, t } = useLanguage();
   const { billId } = useParams();
   const navigate = useNavigate();
@@ -119,6 +119,17 @@ const BillGeneration = () => {
     try {
       const response = await axios.get(`${API}/halls`);
       setHalls(response.data);
+      // Auto-select admin's hall for new bills
+      if (!billId && !billData.hall_id && admin?.hall_name) {
+        const adminHallName = admin.hall_name.toLowerCase();
+        const adminHall = response.data.find(h => {
+          const hallName = h.name.toLowerCase();
+          return hallName === adminHallName || hallName.includes(adminHallName) || adminHallName.includes(hallName);
+        });
+        if (adminHall) {
+          setBillData(prev => ({ ...prev, hall_id: adminHall.id, hall_name: adminHall.name }));
+        }
+      }
     } catch (error) {
       console.error('Error fetching halls:', error);
     }

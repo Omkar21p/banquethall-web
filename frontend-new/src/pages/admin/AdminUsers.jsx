@@ -13,6 +13,7 @@ const AdminUsers = () => {
   const { getAuthHeaders } = useAuth();
   const { t } = useLanguage();
   const [admins, setAdmins] = useState([]);
+  const [halls, setHalls] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
@@ -22,6 +23,7 @@ const AdminUsers = () => {
 
   useEffect(() => {
     fetchAdmins();
+    fetchHalls();
   }, []);
 
   const fetchAdmins = async () => {
@@ -30,6 +32,15 @@ const AdminUsers = () => {
       setAdmins(response.data);
     } catch (error) {
       console.error('Error fetching admins:', error);
+    }
+  };
+
+  const fetchHalls = async () => {
+    try {
+      const response = await axios.get(`${API}/halls`);
+      setHalls(response.data);
+    } catch (error) {
+      console.error('Error fetching halls:', error);
     }
   };
 
@@ -110,14 +121,18 @@ const AdminUsers = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">{t('Hall Name', 'हॉल नाव')}</label>
-                <input
-                  type="text"
+                <select
                   value={formData.hall_name}
                   onChange={(e) => setFormData({ ...formData, hall_name: e.target.value })}
                   className="w-full px-4 py-2 border rounded-lg"
                   required
                   data-testid="admin-hall-input"
-                />
+                >
+                  <option value="">{t('Select Hall...', 'हॉल निवडा...')}</option>
+                  {halls.map(hall => (
+                    <option key={hall.id} value={hall.name}>{hall.name}</option>
+                  ))}
+                </select>
               </div>
               <button
                 type="submit"

@@ -30,8 +30,12 @@ const AdminDashboard = () => {
         axios.get(`${API}/bills`, getAuthHeaders())
       ]);
 
-      // Find the admin's hall ID
-      const adminHall = hallsRes.data.find(h => h.name === admin?.hall_name);
+      // Find the admin's hall ID using flexible matching
+      const adminHallName = (admin?.hall_name || '').toLowerCase();
+      const adminHall = hallsRes.data.find(h => {
+        const hallName = h.name.toLowerCase();
+        return hallName === adminHallName || hallName.includes(adminHallName) || adminHallName.includes(hallName);
+      });
       const adminHallId = adminHall?.id;
 
       // Filter by admin's hall

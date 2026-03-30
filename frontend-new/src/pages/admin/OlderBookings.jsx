@@ -13,7 +13,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const OlderBookings = () => {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, admin } = useAuth();
   const { language, t } = useLanguage();
   const [halls, setHalls] = useState([]);
   const [selectedHall, setSelectedHall] = useState('all');
@@ -48,6 +48,17 @@ const OlderBookings = () => {
     try {
       const response = await axios.get(`${API}/halls`);
       setHalls(response.data);
+      // Default to admin's hall
+      if (admin?.hall_name) {
+        const adminHallName = admin.hall_name.toLowerCase();
+        const adminHall = response.data.find(h => {
+          const hallName = h.name.toLowerCase();
+          return hallName === adminHallName || hallName.includes(adminHallName) || adminHallName.includes(hallName);
+        });
+        if (adminHall) {
+          setSelectedHall(adminHall.id);
+        }
+      }
     } catch (error) {
       console.error('Error fetching halls:', error);
     }

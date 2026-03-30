@@ -15,7 +15,7 @@ const API = `${BACKEND_URL}/api`;
 
 const AdminCalendar = () => {
   const navigate = useNavigate();
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, admin } = useAuth();
   const { language, t } = useLanguage();
   const [halls, setHalls] = useState([]);
   const [selectedHall, setSelectedHall] = useState('');
@@ -58,7 +58,19 @@ const AdminCalendar = () => {
     try {
       const response = await axios.get(`${API}/halls`);
       setHalls(response.data);
-      if (response.data.length > 0) {
+      // Default to admin's hall
+      if (admin?.hall_name) {
+        const adminHallName = admin.hall_name.toLowerCase();
+        const adminHall = response.data.find(h => {
+          const hallName = h.name.toLowerCase();
+          return hallName === adminHallName || hallName.includes(adminHallName) || adminHallName.includes(hallName);
+        });
+        if (adminHall) {
+          setSelectedHall(adminHall.id);
+        } else if (response.data.length > 0) {
+          setSelectedHall(response.data[0].id);
+        }
+      } else if (response.data.length > 0) {
         setSelectedHall(response.data[0].id);
       }
     } catch (error) {
