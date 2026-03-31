@@ -648,7 +648,7 @@ const OlderBookings = () => {
                     <p><strong>{t('Pre-Booking:', 'पूर्व बुकिंग:')}</strong> ₹{selectedBill.pre_booking_amount.toLocaleString()}</p>
                   )}
                   <p className="text-xl font-bold maroon-text">
-                    <strong>{t('Balance Due:', 'उर्वरित:')}</strong> ₹{selectedBill.balance_due.toLocaleString()}
+                    <strong>{t('Balance Due:', 'उर्वरित:')}(Corrected)</strong> ₹{(selectedBill.total_amount - (selectedBill.pre_booking_amount || 0) - (selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0)).toLocaleString()}
                   </p>
                 </div>
 
@@ -712,11 +712,7 @@ const OlderBookings = () => {
                       <button
                         onClick={async () => {
                           if (!newDeposit.amount || parseFloat(newDeposit.amount) <= 0) {
-                            toast.error(t('Valid amount?', 'वैध रक्कम?'));
-                            return;
-                          }
-                          if (parseFloat(newDeposit.amount) > selectedBill.balance_due) {
-                            toast.error(t('Exceeds balance', 'शिल्लक पेक्षा जास्त'));
+                            toast.error(t('Please enter valid amount', 'कृपया वैध रक्कम प्रविष्ट करा'));
                             return;
                           }
                           const deposit = {
@@ -724,10 +720,12 @@ const OlderBookings = () => {
                             amount: parseFloat(newDeposit.amount),
                             timestamp: new Date(newDeposit.timestamp).toISOString()
                           };
+                          const newDeposits = [...(selectedBill.deposits || []), deposit];
+                          const depositsSum = newDeposits.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
                           const updatedBill = {
                             ...selectedBill,
-                            deposits: [...(selectedBill.deposits || []), deposit],
-                            balance_due: selectedBill.balance_due - deposit.amount
+                            deposits: newDeposits,
+                            balance_due: selectedBill.total_amount - (selectedBill.pre_booking_amount || 0) - depositsSum
                           };
                           try {
                             await axios.put(`${API}/bills/${selectedBill.id}`, updatedBill, getAuthHeaders());
@@ -753,6 +751,7 @@ const OlderBookings = () => {
                         <th className="border p-2 text-left">{t('Mode', 'पद्धत')}</th>
                         <th className="border p-2 text-left">{t('Desc', 'वर्णन')}</th>
                         <th className="border p-2 text-right">{t('Amount', 'रक्कम')}</th>
+                        <th className="border p-2 text-center">{t('Act', 'क्रिया')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -763,6 +762,23 @@ const OlderBookings = () => {
                             <td className="border p-2">{t(dep.paymentMode, dep.paymentMode === 'cash' ? 'रोख' : 'ऑनलाईन')}</td>
                             <td className="border p-2">{dep.description || '-'}</td>
                             <td className="border p-2 text-right font-bold">₹{dep.amount.toLocaleString()}</td>
+                            <td className="border p-2 text-center text-red-500 cursor-pointer" onClick={async () => {
+                              if (window.confirm(t('Are you sure?', 'तुम्हाला खात्री आहे?'))) {
+                                const newDeposits = selectedBill.deposits.filter((_, i) => i !== midx);
+                                const depositsSum = newDeposits.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
+                                const updatedBill = {
+                                  ...selectedBill,
+                                  deposits: newDeposits,
+                                  balance_due: selectedBill.total_amount - (selectedBill.pre_booking_amount || 0) - depositsSum
+                                };
+                                try {
+                                  await axios.put(`${API}/bills/${selectedBill.id}`, updatedBill, getAuthHeaders());
+                                  setSelectedBill(updatedBill);
+                                  fetchBills();
+                                  toast.success(t('Deleted', 'काढून टाकले'));
+                                } catch (e) { toast.error('Error'); }
+                              }
+                            }}>🗑️</td>
                           </tr>
                         ))
                       ) : (
@@ -773,8 +789,8 @@ const OlderBookings = () => {
                     </tbody>
                     <tfoot>
                       <tr className="bg-gray-50 font-bold">
-                        <td colSpan={3} className="border p-2 text-right">{t('Total Paid:', 'एकूण भरलेले:')}</td>
-                        <td className="border p-2 text-right">₹{(selectedBill.deposits || []).reduce((s, d) => s + d.amount, 0).toLocaleString()}</td>
+                        <td colSpan={4} className="border p-2 text-right">{t('Total Paid:', 'एकूण भरलेले:')}</td>
+                        <td className="border p-2 text-right">₹{(selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0).toLocaleString()}</td>
                       </tr>
                     </tfoot>
                   </table>
