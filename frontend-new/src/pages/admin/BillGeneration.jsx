@@ -519,8 +519,8 @@ const BillGeneration = () => {
                 <tr>
                   <td className="border p-2">{t_bill('Hall Rent', 'हॉल भाडे')}</td>
                   <td className="border p-2 text-right">1</td>
-                  <td className="border p-2 text-right">₹{parseInt(billData.hall_rent || 0).toLocaleString()}</td>
-                  <td className="border p-2 text-right">₹{parseInt(billData.hall_rent || 0).toLocaleString()}</td>
+                  <td className="border p-2 text-right">₹{Number(billData.hall_rent || 0).toLocaleString()}</td>
+                  <td className="border p-2 text-right">₹{Number(billData.hall_rent || 0).toLocaleString()}</td>
                 </tr>
               )}
 
@@ -543,8 +543,8 @@ const BillGeneration = () => {
                       )}
                     </td>
                     <td className="border p-2 text-right">{billData.thali_total_plates}</td>
-                    <td className="border p-2 text-right">₹{parseInt(billData.thali_price_per_plate).toLocaleString()}</td>
-                    <td className="border p-2 text-right">₹{((parseInt(billData.thali_price_per_plate) || 0) * (parseInt(billData.thali_total_plates) || 0)).toLocaleString()}</td>
+                    <td className="border p-2 text-right">₹{Number(billData.thali_price_per_plate || 0).toLocaleString()}</td>
+                    <td className="border p-2 text-right">₹{((Number(billData.thali_price_per_plate) || 0) * (Number(billData.thali_total_plates) || 0)).toLocaleString()}</td>
                   </tr>
                 </>
               )}
@@ -553,8 +553,8 @@ const BillGeneration = () => {
                 <tr key={idx}>
                   <td className="border p-2">{lang === 'en' ? charge.label : charge.label_mr} {charge.isImported && <span className="text-[8px] bg-blue-100 text-blue-700 px-1 rounded ml-1 font-bold">EVENT MGMT</span>}</td>
                   <td className="border p-2 text-right">1</td>
-                  <td className="border p-2 text-right">₹{charge.amount.toLocaleString()}</td>
-                  <td className="border p-2 text-right">₹{charge.amount.toLocaleString()}</td>
+                  <td className="border p-2 text-right">₹{Number(charge.amount || 0).toLocaleString()}</td>
+                  <td className="border p-2 text-right">₹{Number(charge.amount || 0).toLocaleString()}</td>
                 </tr>
               ))}
               
@@ -568,8 +568,8 @@ const BillGeneration = () => {
                     <tr key={service.id}>
                       <td className="border p-2">{lang === 'en' ? service.name : service.name_mr}</td>
                       <td className="border p-2 text-right">{service.quantity}</td>
-                      <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
-                      <td className="border p-2 text-right">₹{(service.total !== undefined ? service.total : (service.price * service.quantity)).toLocaleString()}</td>
+                      <td className="border p-2 text-right">₹{Number(service.price || 0).toLocaleString()}</td>
+                      <td className="border p-2 text-right">₹{Number(service.total !== undefined ? service.total : (service.price * service.quantity)).toLocaleString()}</td>
                     </tr>
                   ))}
                 </>
@@ -585,8 +585,8 @@ const BillGeneration = () => {
                     <tr key={service.id}>
                       <td className="border p-2">{lang === 'en' ? service.name : service.name_mr}</td>
                       <td className="border p-2 text-right">{service.quantity}</td>
-                      <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
-                      <td className="border p-2 text-right">₹{(service.total !== undefined ? service.total : (service.price * service.quantity)).toLocaleString()}</td>
+                      <td className="border p-2 text-right">₹{Number(service.price || 0).toLocaleString()}</td>
+                      <td className="border p-2 text-right">₹{Number(service.total !== undefined ? service.total : (service.price * service.quantity)).toLocaleString()}</td>
                     </tr>
                   ))}
                 </>
@@ -595,15 +595,15 @@ const BillGeneration = () => {
           </table>
 
           <div className="text-right space-y-2">
-            {parseInt(billData.discount) > 0 && (
-              <p><strong>{t_bill('Discount:', 'सूट:')}</strong> -₹{parseInt(billData.discount).toLocaleString()}</p>
+            {Number(billData.discount) > 0 && (
+              <p><strong>{t_bill('Discount:', 'सूट:')}</strong> -₹{Number(billData.discount).toLocaleString()}</p>
             )}
-            <p className="text-lg"><strong>{t_bill('Total Amount:', 'कुल रक्कम:')}</strong> ₹{billData.total_amount.toLocaleString()}</p>
-            {parseInt(billData.pre_booking_amount) > 0 && (
-              <p><strong>{t_bill('Pre-Booking Amount:', 'पूर्व बुकिंग रक्कम:')}</strong> ₹{parseInt(billData.pre_booking_amount).toLocaleString()}</p>
+            <p className="text-lg"><strong>{t_bill('Total Amount:', 'कुल रक्कम:')}</strong> ₹{Number(billData.total_amount || 0).toLocaleString()}</p>
+            {Number(billData.pre_booking_amount) > 0 && (
+              <p><strong>{t_bill('Pre-Booking Amount:', 'पूर्व बुकिंग रक्कम:')}</strong> ₹{Number(billData.pre_booking_amount).toLocaleString()}</p>
             )}
             <p className="text-xl font-bold maroon-text">
-              <strong>{t_bill('Balance Due:', 'उर्वरित रक्कम:')} </strong> ₹{billData.balance_due.toLocaleString()}
+              <strong>{t_bill('Balance Due:', 'उर्वरित रक्कम:')} </strong> ₹{Number(billData.balance_due || 0).toLocaleString()}
             </p>
           </div>
         </div>

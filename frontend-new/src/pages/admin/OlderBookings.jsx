@@ -507,15 +507,15 @@ const OlderBookings = () => {
                     <tr>
                       <td className="border p-2">{t('Hall Rent', 'हॉल भाडे')}</td>
                       <td className="border p-2 text-right">1</td>
-                      <td className="border p-2 text-right">₹{selectedBill.hall_rent.toLocaleString()}</td>
-                      <td className="border p-2 text-right">₹{selectedBill.hall_rent.toLocaleString()}</td>
+                      <td className="border p-2 text-right">₹{Number(selectedBill.hall_rent || 0).toLocaleString()}</td>
+                      <td className="border p-2 text-right">₹{Number(selectedBill.hall_rent || 0).toLocaleString()}</td>
                     </tr>
                     {selectedBill.custom_charges && selectedBill.custom_charges.length > 0 && selectedBill.custom_charges.map((charge, idx) => (
                       <tr key={`charge-${idx}`}>
                         <td className="border p-2">{language === 'en' ? charge.label : charge.label_mr} {charge.isImported && <span className="text-[8px] bg-blue-100 text-blue-700 px-1 rounded ml-1 font-bold">EVENT MGMT</span>}</td>
                         <td className="border p-2 text-right">1</td>
-                        <td className="border p-2 text-right">₹{charge.amount.toLocaleString()}</td>
-                        <td className="border p-2 text-right">₹{charge.amount.toLocaleString()}</td>
+                        <td className="border p-2 text-right">₹{Number(charge.amount || 0).toLocaleString()}</td>
+                        <td className="border p-2 text-right">₹{Number(charge.amount || 0).toLocaleString()}</td>
                       </tr>
                     ))}
                     
@@ -580,15 +580,15 @@ const OlderBookings = () => {
                 </table>
 
                 <div className="text-right space-y-2">
-                  {selectedBill.discount > 0 && (
-                    <p><strong>{t('Discount:', 'सूट:')}</strong> -₹{selectedBill.discount.toLocaleString()}</p>
+                  {Number(selectedBill.discount) > 0 && (
+                    <p><strong>{t('Discount:', 'सूट:')}</strong> -₹{Number(selectedBill.discount || 0).toLocaleString()}</p>
                   )}
-                  <p className="text-lg"><strong>{t('Total:', 'कुल:')}</strong> ₹{selectedBill.total_amount.toLocaleString()}</p>
-                  {selectedBill.pre_booking_amount > 0 && (
-                    <p><strong>{t('Pre-Booking:', 'पूर्व बुकिंग:')}</strong> ₹{selectedBill.pre_booking_amount.toLocaleString()}</p>
+                  <p className="text-lg"><strong>{t('Total:', 'कुल:')}</strong> ₹{Number(selectedBill.total_amount || 0).toLocaleString()}</p>
+                  {Number(selectedBill.pre_booking_amount) > 0 && (
+                    <p><strong>{t('Pre-Booking:', 'पूर्व बुकिंग:')}</strong> ₹{Number(selectedBill.pre_booking_amount || 0).toLocaleString()}</p>
                   )}
                   <p className="text-xl font-bold maroon-text">
-                    <strong>{t('Balance Due:', 'उर्वरित रक्कम:')} </strong> ₹{(selectedBill.total_amount - (selectedBill.pre_booking_amount || 0) - (selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0)).toLocaleString()}
+                    <strong>{t('Balance Due:', 'उर्वरित रक्कम:')} </strong> ₹{Number((selectedBill.total_amount || 0) - (selectedBill.pre_booking_amount || 0) - (selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0)).toLocaleString()}
                   </p>
                 </div>
 
