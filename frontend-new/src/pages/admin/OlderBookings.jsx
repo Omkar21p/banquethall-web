@@ -528,7 +528,7 @@ const OlderBookings = () => {
                     <p><strong>{t('Event Type:', 'कार्यक्रम:')}</strong> {selectedBill.event_type}</p>
                   </div>
                   <div>
-                    {selectedBill.arrival_date && <p><strong>{t('Arrival:', 'हॉलमध्ये आगमन:')}</strong> {selectedBill.arrival_date}</p>}
+                    {selectedBill.arrival_date && <p><strong>{t('Arrival:', 'हॉलमध्ये आगमन:')}</strong> {selectedBill.arrival_date} (06:00 PM)</p>}
                     {selectedBill.departure_date && <p><strong>{t('Departure:', 'हॉलमधून प्रस्थान:')}</strong> {selectedBill.departure_date}</p>}
                     <p><strong>{t('Event Date:', 'कार्यक्रम तारीख:')}</strong> {selectedBill.event_date}</p>
                     <p><strong>{t('Booking Date:', 'बुकिंग तारीख:')}</strong> {selectedBill.booking_date}</p>
