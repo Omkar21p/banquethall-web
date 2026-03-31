@@ -419,22 +419,23 @@ const BillGeneration = () => {
       setIsExporting(false);
       const imgData = canvas.toDataURL('image/png');
 
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgWidth = 210;
-    const pageHeight = 297;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    let position = 0;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const margin = 10;
+      const imgWidth = 210 - (margin * 2);
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = margin;
 
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      heightLeft -= (pageHeight - margin * 2);
 
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
+      while (heightLeft > 0) {
+        position = (heightLeft - imgHeight) + margin;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+        heightLeft -= (pageHeight - margin * 2);
+      }
 
     pdf.save(`bill-${billData.customer_name}-${billData.event_date}.pdf`);
     } catch (err) {
@@ -607,7 +608,7 @@ const BillGeneration = () => {
               <p><strong>{t_bill('Pre-Booking Amount:', 'पूर्व बुकिंग रक्कम:')}</strong> ₹{parseInt(billData.pre_booking_amount).toLocaleString()}</p>
             )}
             <p className="text-xl font-bold maroon-text">
-              <strong>{t_bill('Balance Due:', 'उर्वरित रक्कम:')}</strong> ₹{billData.balance_due.toLocaleString()}
+              <strong>{t_bill('Balance Due:', 'उर्वरित रक्कम:')} </strong> ₹{billData.balance_due.toLocaleString()}
             </p>
           </div>
         </div>
