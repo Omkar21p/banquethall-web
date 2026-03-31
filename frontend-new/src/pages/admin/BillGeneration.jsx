@@ -21,6 +21,8 @@ const BillGeneration = () => {
   const [halls, setHalls] = useState([]);
   const [services, setServices] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [newDeposit, setNewDeposit] = useState({ amount: '', paymentMode: 'cash', description: '', timestamp: new Date().toISOString().split('T')[0] });
   const billPreviewRef = useRef(null);
   const isLoadingBill = useRef(false);
   const [billData, setBillData] = useState({
@@ -606,6 +608,39 @@ const BillGeneration = () => {
               <strong>{t_bill('Balance Due:', 'उर्वरित रक्कम:')} </strong> ₹{Number(billData.balance_due || 0).toLocaleString()}
             </p>
           </div>
+
+          {/* Deposits Section in Preview */}
+          {(billData.deposits?.length > 0) && (
+            <div className="mt-8 border-t pt-6 deposits-section">
+              <h3 className="playfair text-xl font-bold maroon-text mb-4">{t_bill('Deposits History', 'ठेवींचा इतिहास')}</h3>
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border p-2 text-left">{t_bill('Date', 'तारीख')}</th>
+                    <th className="border p-2 text-left">{t_bill('Mode', 'पद्धत')}</th>
+                    <th className="border p-2 text-left">{t_bill('Desc', 'वर्णन')}</th>
+                    <th className="border p-2 text-right">{t_bill('Amount', 'रक्कम')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {billData.deposits.map((dep, midx) => (
+                    <tr key={midx}>
+                      <td className="border p-2">{new Date(dep.timestamp).toLocaleDateString()}</td>
+                      <td className="border p-2">{t_bill(dep.paymentMode === 'cash' ? 'Cash' : 'Online', dep.paymentMode === 'cash' ? 'रोख' : 'ऑनलाईन')}</td>
+                      <td className="border p-2">{dep.description || '-'}</td>
+                      <td className="border p-2 text-right font-bold">₹{Number(dep.amount || 0).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-gray-50 font-bold">
+                    <td colSpan={3} className="border p-2 text-right">{t_bill('Total Paid:', 'एकूण भरलेले:')}</td>
+                    <td className="border p-2 text-right">₹{(billData.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0).toLocaleString()}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Customization Controls for Preview */}
@@ -1092,10 +1127,107 @@ const BillGeneration = () => {
             </div>
 
             <div className="mt-6 p-4 bg-[#FDFBF7] rounded-lg">
-              <p className="text-lg"><strong>{t('Total Amount:', 'कुल रक्कम:')}</strong> ₹{billData.total_amount.toLocaleString()}</p>
+              <p className="text-lg"><strong>{t('Total Amount:', 'कुल रक्कम:')}</strong> ₹{Number(billData.total_amount || 0).toLocaleString()}</p>
               <p className="text-xl font-bold maroon-text">
-                <strong>{t('Balance Due:', 'उर्वरित रक्कम:')}</strong> ₹{billData.balance_due.toLocaleString()}
+                <strong>{t('Balance Due:', 'उर्वरित रक्कम:')}</strong> ₹{Number(billData.balance_due || 0).toLocaleString()}
               </p>
+            </div>
+
+            {/* Editable Deposits History Section */}
+            <div className="mt-8 border-t pt-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+              <h3 className="playfair text-xl font-bold maroon-text mb-4">{t('Deposits History', 'ठेवींचा इतिहास')}</h3>
+              
+              <div className="bg-gray-50 p-4 rounded-xl mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 items-end">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Date', 'तारीख')}</label>
+                    <input
+                      type="date"
+                      value={newDeposit.timestamp}
+                      onChange={(e) => setNewDeposit({ ...newDeposit, timestamp: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Amount', 'रक्कम')}</label>
+                    <input
+                      type="number"
+                      value={newDeposit.amount}
+                      onChange={(e) => setNewDeposit({ ...newDeposit, amount: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Mode', 'पद्धत')}</label>
+                    <div className="flex gap-2 py-2">
+                      <label className="flex items-center gap-1 text-xs">
+                        <input type="radio" name="p-mode" checked={newDeposit.paymentMode === 'cash'} onChange={() => setNewDeposit({ ...newDeposit, paymentMode: 'cash' })} /> {t('Cash', 'रोख')}
+                      </label>
+                      <label className="flex items-center gap-1 text-xs">
+                        <input type="radio" name="p-mode" checked={newDeposit.paymentMode === 'online'} onChange={() => setNewDeposit({ ...newDeposit, paymentMode: 'online' })} /> {t('Online', 'ऑनलाईन')}
+                      </label>
+                    </div>
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Description', 'वर्णन')}</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Adv Check 001"
+                      value={newDeposit.description}
+                      onChange={(e) => setNewDeposit({ ...newDeposit, description: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!newDeposit.amount) return toast.error('Enter amount');
+                      const dep = { ...newDeposit, amount: parseFloat(newDeposit.amount) };
+                      setBillData(prev => ({
+                        ...prev,
+                        deposits: [...(prev.deposits || []), dep]
+                      }));
+                      setNewDeposit({ amount: '', paymentMode: 'cash', description: '', timestamp: new Date().toISOString().split('T')[0] });
+                      toast.success(t('Added!', 'जोडले!'));
+                    }}
+                    className="px-4 py-2 bg-[#D4AF37] text-white rounded-lg hover:bg-[#B8941F]"
+                  >
+                    {t('Add Cash/Online', 'रक्कम जोडा')}
+                  </button>
+                </div>
+              </div>
+
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border p-2 text-left">{t('Date', 'तारीख')}</th>
+                    <th className="border p-2 text-left">{t('Mode', 'पद्धत')}</th>
+                    <th className="border p-2 text-left">{t('Desc', 'वर्णन')}</th>
+                    <th className="border p-2 text-right">{t('Amount', 'रक्कम')}</th>
+                    <th className="border p-2 text-center">{t('Act', 'क्रिया')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {billData.deposits?.length > 0 ? (
+                    billData.deposits.map((dep, midx) => (
+                      <tr key={midx}>
+                        <td className="border p-2">{new Date(dep.timestamp).toLocaleDateString()}</td>
+                        <td className="border p-2">{t(dep.paymentMode === 'cash' ? 'Cash' : 'Online', dep.paymentMode === 'cash' ? 'रोख' : 'ऑनलाईन')}</td>
+                        <td className="border p-2">{dep.description || '-'}</td>
+                        <td className="border p-2 text-right">₹{Number(dep.amount || 0).toLocaleString()}</td>
+                        <td className="border p-2 text-center text-red-500 cursor-pointer hover:bg-red-50" onClick={() => {
+                          const updated = billData.deposits.filter((_, i) => i !== midx);
+                          setBillData({ ...billData, deposits: updated });
+                          toast.success(t('Deleted', 'काढून टाकले'));
+                        }}>🗑️</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="border p-4 text-center text-gray-400">{t('No deposits yet', 'अद्याप एकही ठेव नाही')}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
 
             <div className="mt-6 flex gap-4">
