@@ -161,7 +161,7 @@ const OlderBookings = () => {
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.deposits-section'] }
+        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.deposits-section', '.summary-section'] }
       };
 
       await window.html2pdf().from(element).set(opt).save();
@@ -460,12 +460,12 @@ const OlderBookings = () => {
                     <img src={halls.find(h => h.id === selectedBill.hall_id).logo} alt="Logo" className="h-16 object-contain" />
                   )}
                   <div className="text-left">
-                    <h2 className="playfair text-2xl font-bold maroon-text leading-tight">{selectedBill.hall_name}</h2>
-                    <p className="text-base text-gray-600 font-medium">{t('Invoice', 'बिल')}</p>
+                    <h2 className="playfair text-3xl font-bold maroon-text leading-tight">{selectedBill.hall_name}</h2>
+                    <p className="text-lg text-gray-600 font-medium">{t('Invoice', 'बिल')}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-6 text-xs">
+                <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
                   <div>
                     <p><strong>{t('Customer Name:', 'ग्राहक नाव:')}</strong> {selectedBill.customer_name}</p>
                     <p><strong>{t('City:', 'शहर:')}</strong> {selectedBill.customer_city}</p>
@@ -499,7 +499,7 @@ const OlderBookings = () => {
                   </div>
                 </div>
 
-                <table className="w-full text-[9px] mb-4 border-collapse">
+                <table className="w-full text-xs mb-4 border-collapse">
                   <thead>
                     <tr className="bg-[#800000] text-white">
                       <th className="border p-2 text-left">{t('Description', 'वर्णन')}</th>
@@ -584,7 +584,7 @@ const OlderBookings = () => {
                   </tbody>
                 </table>
 
-                <div className="text-right space-y-2">
+                <div className="text-right space-y-2 summary-section">
                   {Number(selectedBill.discount) > 0 && (
                     <p><strong>{t('Discount:', 'सूट:')}</strong> -₹{Number(selectedBill.discount || 0).toLocaleString()}</p>
                   )}
@@ -598,7 +598,7 @@ const OlderBookings = () => {
                 </div>
 
                 {/* Deposits Section */}
-                <div className="mt-8 border-t pt-6 deposits-section">
+                <div className="mt-8 border-t pt-6 deposits-section summary-section">
                   <h3 className="playfair text-xl font-bold maroon-text mb-4">{t('Deposits History', 'ठेवींचा इतिहास')}</h3>
                   {!isExporting && (
                     <div className="bg-gray-50 p-4 rounded-xl mb-6">
@@ -682,7 +682,7 @@ const OlderBookings = () => {
                     </div>
                   )}
 
-                  <table className="w-full text-[9px] border-collapse">
+                  <table className="w-full text-xs border-collapse">
                     <thead>
                       <tr className="bg-gray-100">
                         <th className="border p-1 text-left">{t('Date', 'तारीख')}</th>

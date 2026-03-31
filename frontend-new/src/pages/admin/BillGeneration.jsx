@@ -429,7 +429,7 @@ const BillGeneration = () => {
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.deposits-section'] }
+        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.deposits-section', '.summary-section'] }
       };
 
       await window.html2pdf().from(element).set(opt).save();
@@ -468,8 +468,8 @@ const BillGeneration = () => {
               <img src={selectedHallData.logo} alt="Hall Logo" className="h-20 object-contain" />
             )}
             <div className={selectedHallData?.logo ? "text-left" : "text-center"}>
-              <h1 className="playfair text-2xl font-bold maroon-text leading-tight">{billData.hall_name}</h1>
-              <p className="text-base text-gray-600 font-medium">{t_bill('Invoice', 'बिल')}</p>
+              <h1 className="playfair text-3xl font-bold maroon-text leading-tight">{billData.hall_name}</h1>
+              <p className="text-lg text-gray-600 font-medium">{t_bill('Invoice', 'बिल')}</p>
             </div>
           </div>
 
@@ -507,7 +507,7 @@ const BillGeneration = () => {
             </div>
           </div>
 
-          <table className="w-full text-[9px] mb-4 border-collapse">
+          <table className="w-full text-xs mb-4 border-collapse">
             <thead>
               <tr className="bg-[#800000] text-white">
                 <th className="border p-1 text-left">{t_bill('Description', 'वर्णन')}</th>
@@ -597,7 +597,7 @@ const BillGeneration = () => {
             </tbody>
           </table>
 
-          <div className="text-right space-y-2">
+          <div className="text-right space-y-2 summary-section">
             {Number(billData.discount) > 0 && (
               <p><strong>{t_bill('Discount:', 'सूट:')}</strong> -₹{Number(billData.discount).toLocaleString()}</p>
             )}
@@ -612,9 +612,9 @@ const BillGeneration = () => {
 
           {/* Deposits Section in Preview */}
           {(billData.deposits?.length > 0) && (
-            <div className="mt-8 border-t pt-6 deposits-section">
+            <div className="mt-8 border-t pt-6 deposits-section summary-section">
               <h3 className="playfair text-xl font-bold maroon-text mb-4">{t_bill('Deposits History', 'ठेवींचा इतिहास')}</h3>
-              <table className="w-full text-[9px] border-collapse">
+              <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="border p-1 text-left">{t_bill('Date', 'तारीख')}</th>
