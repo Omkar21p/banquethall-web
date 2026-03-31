@@ -455,12 +455,17 @@ const OlderBookings = () => {
                 .exporting-pdf .no-print { display: none !important; }
               `}</style>
               <div ref={billPreviewRef} className="border-4 border-[#800000] p-6 bg-white">
-                <div className="text-center mb-6">
-                  <h2 className="playfair text-3xl font-bold maroon-text">{selectedBill.hall_name}</h2>
-                  <p className="text-lg mt-2">{t('Invoice', 'बिल')}</p>
+                <div className="flex items-center justify-center gap-6 mb-6">
+                  {halls.find(h => h.id === selectedBill.hall_id)?.logo && (
+                    <img src={halls.find(h => h.id === selectedBill.hall_id).logo} alt="Logo" className="h-16 object-contain" />
+                  )}
+                  <div className="text-left">
+                    <h2 className="playfair text-2xl font-bold maroon-text leading-tight">{selectedBill.hall_name}</h2>
+                    <p className="text-base text-gray-600 font-medium">{t('Invoice', 'बिल')}</p>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+                <div className="grid grid-cols-2 gap-4 mb-6 text-xs">
                   <div>
                     <p><strong>{t('Customer Name:', 'ग्राहक नाव:')}</strong> {selectedBill.customer_name}</p>
                     <p><strong>{t('City:', 'शहर:')}</strong> {selectedBill.customer_city}</p>

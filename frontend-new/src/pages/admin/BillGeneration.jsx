@@ -456,23 +456,24 @@ const BillGeneration = () => {
     const selectedHallData = halls.find(h => h.id === billData.hall_id);
 
     return (
-      <div ref={billPreviewRef} className="bg-white p-8 rounded-xl shadow-lg relative" data-testid="bill-preview">
+      <>
+        <div ref={billPreviewRef} className="bg-white p-8 rounded-xl shadow-lg relative" data-testid="bill-preview">
         {/* CSS to hide elements in PDF */}
         <style>{`
           .exporting-pdf .no-print { display: none !important; }
         `}</style>
         <div className="border-4 border-[#800000] p-6">
-          <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-6 mb-6">
             {selectedHallData?.logo && (
-              <div className="flex justify-center mb-3">
-                <img src={selectedHallData.logo} alt="Hall Logo" className="h-20 object-contain" />
-              </div>
+              <img src={selectedHallData.logo} alt="Hall Logo" className="h-20 object-contain" />
             )}
-            <h1 className="playfair text-3xl font-bold maroon-text">{billData.hall_name}</h1>
-            <p className="text-lg mt-2">{t_bill('Invoice', 'बिल')}</p>
+            <div className={selectedHallData?.logo ? "text-left" : "text-center"}>
+              <h1 className="playfair text-2xl font-bold maroon-text leading-tight">{billData.hall_name}</h1>
+              <p className="text-base text-gray-600 font-medium">{t_bill('Invoice', 'बिल')}</p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+          <div className="grid grid-cols-2 gap-4 mb-6 text-xs">
             <div>
               <p><strong>{t_bill('Customer Name:', 'ग्राहक नाव:')}</strong> {billData.customer_name}</p>
               <p><strong>{t_bill('City:', 'शहर:')}</strong> {billData.customer_city}</p>
@@ -489,7 +490,7 @@ const BillGeneration = () => {
 
           <div className="mb-6 p-4 bg-gray-50 border rounded-lg karyalay-package">
             <h3 className="font-bold maroon-text mb-2 border-b-2 border-[#D4AF37] inline-block">{t_bill('Karyalay Package', 'कार्यालय पॅकेज')}</h3>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-[10px]">
               <ul className="list-disc pl-4 space-y-1">
                 <li>11,000 sq. ft hall</li>
                 <li>3,000 sq ft V.I.P Dinning hall</li>
@@ -506,7 +507,7 @@ const BillGeneration = () => {
             </div>
           </div>
 
-          <table className="w-full text-sm mb-4 border-collapse">
+          <table className="w-full text-xs mb-4 border-collapse">
             <thead>
               <tr className="bg-[#800000] text-white">
                 <th className="border p-2 text-left">{t_bill('Description', 'वर्णन')}</th>
@@ -642,19 +643,20 @@ const BillGeneration = () => {
             </div>
           )}
         </div>
-
-        {/* Customization Controls for Preview */}
-        {showPreview && !isExporting && (
-          <div className="mt-4 p-4 text-center">
-            <button
-              onClick={() => setBillData(prev => ({ ...prev, show_hall_rent: !prev.show_hall_rent }))}
-              className={`px-4 py-2 rounded-lg text-sm mr-4 border ${billData.show_hall_rent ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500'}`}
-            >
-              {billData.show_hall_rent ? t('Hide Hall Rent', 'हॉल भाडे लपवा') : t('Show Hall Rent', 'हॉल भाडे दाखवा')}
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* Control buttons moved OUTSIDE the capture ref */}
+      {showPreview && !isExporting && (
+        <div className="mt-4 p-4 text-center">
+          <button
+            onClick={() => setBillData(prev => ({ ...prev, show_hall_rent: !prev.show_hall_rent }))}
+            className={`px-4 py-2 rounded-lg text-sm mr-4 border ${billData.show_hall_rent ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500'}`}
+          >
+            {billData.show_hall_rent ? t('Hide Hall Rent', 'हॉल भाडे लपवा') : t('Show Hall Rent', 'हॉल भाडे दाखवा')}
+          </button>
+        </div>
+      )}
+      </>
     );
   };
 
