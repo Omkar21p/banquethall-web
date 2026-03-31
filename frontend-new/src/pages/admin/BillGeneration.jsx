@@ -396,8 +396,8 @@ const BillGeneration = () => {
               <p><strong>{t_bill('Event Type:', 'कार्यक्रम प्रकार:')}</strong> {billData.event_type}</p>
             </div>
             <div>
-              <p><strong>{t_bill('Arrival:', 'हॉलमध्ये आगमन:')}</strong> {billData.arrival_date} ({billData.arrival_time})</p>
-              <p><strong>{t_bill('Departure:', 'हॉलमधून प्रस्थान:')}</strong> {billData.departure_date} ({billData.departure_time})</p>
+              <p><strong>{t_bill('Arrival:', 'हॉलमध्ये आगमन:')}</strong> {billData.arrival_date}</p>
+              <p><strong>{t_bill('Departure:', 'हॉलमधून प्रस्थान:')}</strong> {billData.departure_date}</p>
               <p><strong>{t_bill('Event Date:', 'कार्यक्रम तारीख:')}</strong> {billData.event_date}</p>
               <p><strong>{t_bill('Booking Date:', 'बुकिंग तारीख:')}</strong> {billData.booking_date}</p>
             </div>

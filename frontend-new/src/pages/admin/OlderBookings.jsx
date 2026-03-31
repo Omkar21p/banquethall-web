@@ -522,14 +522,35 @@ const OlderBookings = () => {
 
                 <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
                   <div>
-                    <p><strong>{t('Customer:', 'ग्राहक:')}</strong> {selectedBill.customer_name}</p>
+                    <p><strong>{t('Customer Name:', 'ग्राहक नाव:')}</strong> {selectedBill.customer_name}</p>
                     <p><strong>{t('City:', 'शहर:')}</strong> {selectedBill.customer_city}</p>
                     <p><strong>{t('Guests:', 'पाहुणे:')}</strong> {selectedBill.num_guests}</p>
+                    <p><strong>{t('Event Type:', 'कार्यक्रम:')}</strong> {selectedBill.event_type}</p>
                   </div>
                   <div>
-                    <p><strong>{t('Booking Date:', 'बुकिंग तारीख:')}</strong> {selectedBill.booking_date}</p>
+                    {selectedBill.arrival_date && <p><strong>{t('Arrival:', 'हॉलमध्ये आगमन:')}</strong> {selectedBill.arrival_date}</p>}
+                    {selectedBill.departure_date && <p><strong>{t('Departure:', 'हॉलमधून प्रस्थान:')}</strong> {selectedBill.departure_date}</p>}
                     <p><strong>{t('Event Date:', 'कार्यक्रम तारीख:')}</strong> {selectedBill.event_date}</p>
-                    <p><strong>{t('Event Type:', 'कार्यक्रम:')}</strong> {selectedBill.event_type}</p>
+                    <p><strong>{t('Booking Date:', 'बुकिंग तारीख:')}</strong> {selectedBill.booking_date}</p>
+                  </div>
+                </div>
+
+                <div className="mb-6 p-4 bg-gray-50 border rounded-lg">
+                  <h3 className="font-bold maroon-text mb-2 border-b-2 border-[#D4AF37] inline-block text-sm">{t('Karyalay Package', 'कार्यालय पॅकेज')}</h3>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-[10px]">
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>11,000 sq. ft hall</li>
+                      <li>3,000 sq ft V.I.P Dinning hall</li>
+                      <li>6,500 sq ft Open dinning hall</li>
+                      <li>500 chairs</li>
+                      <li>12 wall fans</li>
+                    </ul>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>AC Room - 2</li>
+                      <li>Carpet 11,000 sq ft</li>
+                      <li>1,600 sq ft kitchen</li>
+                      <li>Cooking utensils as per attached list</li>
+                    </ul>
                   </div>
                 </div>
 
@@ -738,7 +759,7 @@ const OlderBookings = () => {
                       {selectedBill.deposits?.length > 0 ? (
                         selectedBill.deposits.map((dep, midx) => (
                           <tr key={midx}>
-                            <td className="border p-2">{new Date(dep.timestamp).toLocaleString()}</td>
+                            <td className="border p-2">{new Date(dep.timestamp).toLocaleDateString()}</td>
                             <td className="border p-2">{t(dep.paymentMode, dep.paymentMode === 'cash' ? 'रोख' : 'ऑनलाईन')}</td>
                             <td className="border p-2">{dep.description || '-'}</td>
                             <td className="border p-2 text-right font-bold">₹{dep.amount.toLocaleString()}</td>
