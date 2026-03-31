@@ -104,13 +104,14 @@ const BillGeneration = () => {
           const updatedServices = [...(bill.services || []).filter(s => !s.isImported), ...importedServices];
           const updatedCharges = [...(bill.custom_charges || []).filter(c => !c.isImported), ...importedCharges];
 
-          // Check for changes to alert the user
-          if (JSON.stringify(updatedServices) !== JSON.stringify(bill.services)) {
+          // If we found any new services, recalculate the total immediately
+          if (JSON.stringify(updatedServices) !== JSON.stringify(bill.services) || JSON.stringify(updatedCharges) !== JSON.stringify(bill.custom_charges)) {
             finalServices = updatedServices;
-            toast.info(t('Linked booking updated! Imported new services from Event Manager.', 'इव्हेंट मॅनेजरमधील नवीन सेवा अपडेट झाल्या आहेत.'));
-          }
-          if (JSON.stringify(updatedCharges) !== JSON.stringify(bill.custom_charges)) {
             finalCharges = updatedCharges;
+            toast.info(t('Linked booking updated! Imported new services from Event Manager.', 'इव्हेंट मॅनेजरमधील नवीन सेवा अपडेट झाल्या आहेत.'));
+
+            // Temporary flag to allow calculateTotal to run once
+            isLoadingBill.current = false;
           }
         }
 
@@ -127,12 +128,15 @@ const BillGeneration = () => {
           custom_charges: finalCharges,
           deposits: bill.deposits || [],
           show_hall_rent: bill.show_hall_rent !== undefined ? bill.show_hall_rent : true,
-          // Preserve the stored totals initially
+          // Preserve the stored totals initially (they'll be updated by calculateTotal if isLoadingBill was set to false)
           total_amount: bill.total_amount,
           balance_due: bill.balance_due
         });
         // Allow one render cycle to complete before enabling auto-calc
-        setTimeout(() => { isLoadingBill.current = false; }, 500);
+        // Only if we didn't already enable it above for a sync
+        if (isLoadingBill.current) {
+          setTimeout(() => { isLoadingBill.current = false; }, 500);
+        }
       } else {
         isLoadingBill.current = false;
       }
@@ -279,9 +283,10 @@ const BillGeneration = () => {
     }
   };
 
-  const calculateTotal = () => {
+  const calculateTotal = (forceLoad = false) => {
     // Skip auto calculation during initial bill load to preserve stored totals
-    if (isLoadingBill.current) return;
+    // BUT allow if we explicitly force it (e.g. after a sync)
+    if (isLoadingBill.current && !forceLoad) return;
     // Skip auto calculation if manual override is enabled
     if (billData.manual_total && billData.manual_balance) return;
 
