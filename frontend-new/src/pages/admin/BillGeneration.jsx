@@ -595,20 +595,29 @@ const BillGeneration = () => {
                 </>
               )}
             </tbody>
+            <tfoot className="summary-section">
+              {Number(billData.discount) > 0 && (
+                <tr className="font-bold text-gray-700">
+                  <td colSpan={3} className="border p-1 text-right">{t_bill('Discount:', 'सूट:')}</td>
+                  <td className="border p-1 text-right">-₹{Number(billData.discount).toLocaleString()}</td>
+                </tr>
+              )}
+              <tr className="font-bold text-lg bg-gray-50">
+                <td colSpan={3} className="border p-1 text-right">{t_bill('Total Amount:', 'कुल रक्कम:')}</td>
+                <td className="border p-1 text-right">₹{Number(billData.total_amount || 0).toLocaleString()}</td>
+              </tr>
+              {Number(billData.pre_booking_amount) > 0 && (
+                <tr className="font-bold text-gray-700">
+                  <td colSpan={3} className="border p-1 text-right">{t_bill('Pre-Booking Amount:', 'पूर्व बुकिंग रक्कम:')}</td>
+                  <td className="border p-1 text-right">₹{Number(billData.pre_booking_amount).toLocaleString()}</td>
+                </tr>
+              )}
+              <tr className="font-bold text-xl maroon-text bg-red-50/30">
+                <td colSpan={3} className="border p-1 text-right">{t_bill('Balance Due:', 'उर्वरित रक्कम:')}</td>
+                <td className="border p-1 text-right">₹{Number(billData.balance_due || 0).toLocaleString()}</td>
+              </tr>
+            </tfoot>
           </table>
-
-          <div className="text-right space-y-2 summary-section">
-            {Number(billData.discount) > 0 && (
-              <p><strong>{t_bill('Discount:', 'सूट:')}</strong> -₹{Number(billData.discount).toLocaleString()}</p>
-            )}
-            <p className="text-lg"><strong>{t_bill('Total Amount:', 'कुल रक्कम:')}</strong> ₹{Number(billData.total_amount || 0).toLocaleString()}</p>
-            {Number(billData.pre_booking_amount) > 0 && (
-              <p><strong>{t_bill('Pre-Booking Amount:', 'पूर्व बुकिंग रक्कम:')}</strong> ₹{Number(billData.pre_booking_amount).toLocaleString()}</p>
-            )}
-            <p className="text-xl font-bold maroon-text">
-              <strong>{t_bill('Balance Due:', 'उर्वरित रक्कम:')} </strong> ₹{Number(billData.balance_due || 0).toLocaleString()}
-            </p>
-          </div>
 
           {/* Deposits Section in Preview */}
           {(billData.deposits?.length > 0) && (

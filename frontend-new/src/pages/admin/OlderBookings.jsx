@@ -582,20 +582,29 @@ const OlderBookings = () => {
                       </>
                     )}
                   </tbody>
+                  <tfoot className="summary-section">
+                    {Number(selectedBill.discount || 0) > 0 && (
+                      <tr className="font-bold text-gray-700">
+                        <td colSpan={3} className="border p-1 text-right">{t('Discount:', 'सूट:')}</td>
+                        <td className="border p-1 text-right">-₹{Number(selectedBill.discount || 0).toLocaleString()}</td>
+                      </tr>
+                    )}
+                    <tr className="font-bold text-lg bg-gray-50">
+                      <td colSpan={3} className="border p-1 text-right">{t('Total:', 'कुल:')}</td>
+                      <td className="border p-1 text-right">₹{Number(selectedBill.total_amount || 0).toLocaleString()}</td>
+                    </tr>
+                    {Number(selectedBill.pre_booking_amount || 0) > 0 && (
+                      <tr className="font-bold text-gray-700">
+                        <td colSpan={3} className="border p-1 text-right">{t('Pre-Booking:', 'पूर्व बुकिंग:')}</td>
+                        <td className="border p-1 text-right">₹{Number(selectedBill.pre_booking_amount || 0).toLocaleString()}</td>
+                      </tr>
+                    )}
+                    <tr className="font-bold text-xl maroon-text bg-red-50/30">
+                      <td colSpan={3} className="border p-1 text-right">{t('Balance Due:', 'उर्वरित रक्कम:')}</td>
+                      <td className="border p-1 text-right">₹{Number((selectedBill.total_amount || 0) - (selectedBill.pre_booking_amount || 0) - (selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0)).toLocaleString()}</td>
+                    </tr>
+                  </tfoot>
                 </table>
-
-                <div className="text-right space-y-2 summary-section">
-                  {Number(selectedBill.discount) > 0 && (
-                    <p><strong>{t('Discount:', 'सूट:')}</strong> -₹{Number(selectedBill.discount || 0).toLocaleString()}</p>
-                  )}
-                  <p className="text-lg"><strong>{t('Total:', 'कुल:')}</strong> ₹{Number(selectedBill.total_amount || 0).toLocaleString()}</p>
-                  {Number(selectedBill.pre_booking_amount) > 0 && (
-                    <p><strong>{t('Pre-Booking:', 'पूर्व बुकिंग:')}</strong> ₹{Number(selectedBill.pre_booking_amount || 0).toLocaleString()}</p>
-                  )}
-                  <p className="text-xl font-bold maroon-text">
-                    <strong>{t('Balance Due:', 'उर्वरित रक्कम:')} </strong> ₹{Number((selectedBill.total_amount || 0) - (selectedBill.pre_booking_amount || 0) - (selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0)).toLocaleString()}
-                  </p>
-                </div>
 
                 {/* Deposits Section */}
                 <div className="mt-8 border-t pt-6 deposits-section summary-section">
