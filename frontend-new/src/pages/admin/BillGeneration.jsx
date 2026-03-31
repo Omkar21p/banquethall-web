@@ -404,8 +404,20 @@ const BillGeneration = () => {
 
   const handleDownloadPDF = async () => {
     const element = billPreviewRef.current;
-    const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-    const imgData = canvas.toDataURL('image/png');
+    if (!element) return;
+    
+    try {
+      setIsExporting(true);
+      await new Promise(r => setTimeout(r, 100)); // wait for re-render
+      
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      setIsExporting(false);
+      const imgData = canvas.toDataURL('image/png');
 
     const pdf = new jsPDF('p', 'mm', 'a4');
     const imgWidth = 210;
@@ -425,7 +437,12 @@ const BillGeneration = () => {
     }
 
     pdf.save(`bill-${billData.customer_name}-${billData.event_date}.pdf`);
-    toast.success(t('PDF downloaded!', 'PDF डाऊनलोड झाले!'));
+    } catch (err) {
+      console.error("PDF generation error:", err);
+      toast.error(t('Error', 'त्रुटी'));
+    } finally {
+      element.classList.remove('exporting-pdf');
+    }
   };
 
   const handleShareWhatsApp = () => {
@@ -441,7 +458,11 @@ const BillGeneration = () => {
     const selectedHallData = halls.find(h => h.id === billData.hall_id);
 
     return (
-      <div ref={billPreviewRef} className="bg-white p-8 rounded-xl shadow-lg" data-testid="bill-preview">
+      <div ref={billPreviewRef} className="bg-white p-8 rounded-xl shadow-lg relative" data-testid="bill-preview">
+        {/* CSS to hide elements in PDF */}
+        <style>{`
+          .exporting-pdf .no-print { display: none !important; }
+        `}</style>
         <div className="border-4 border-[#800000] p-6">
           <div className="text-center mb-6">
             {selectedHallData?.logo && (
@@ -592,7 +613,7 @@ const BillGeneration = () => {
         </div>
 
         {/* Customization Controls for Preview */}
-        {showPreview && (
+        {showPreview && !isExporting && (
           <div className="mt-4 p-4 text-center">
             <button
               onClick={() => setBillData(prev => ({ ...prev, show_hall_rent: !prev.show_hall_rent }))}

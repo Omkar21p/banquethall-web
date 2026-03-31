@@ -22,6 +22,7 @@ const OlderBookings = () => {
   const [filteredBills, setFilteredBills] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBill, setSelectedBill] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
   const billPreviewRef = useRef(null);
   const navigate = useNavigate();
   const [newDeposit, setNewDeposit] = useState({
@@ -139,7 +140,17 @@ const OlderBookings = () => {
     }
 
     try {
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      setIsExporting(true);
+      // Wait a tick for React to re-render without inputs
+      await new Promise(r => setTimeout(r, 100));
+      
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      setIsExporting(false);
       const imgData = canvas.toDataURL('image/png');
 
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -442,6 +453,10 @@ const OlderBookings = () => {
         {selectedBill && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedBill(null)}>
             <div className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="bill-details-modal">
+              {/* Add CSS for hiding elements in PDF */}
+              <style>{`
+                .exporting-pdf .no-print { display: none !important; }
+              `}</style>
               <div ref={billPreviewRef} className="border-4 border-[#800000] p-6 bg-white">
                 <div className="text-center mb-6">
                   <h2 className="playfair text-3xl font-bold maroon-text">{selectedBill.hall_name}</h2>
@@ -477,7 +492,7 @@ const OlderBookings = () => {
                       <li>AC Room - 2</li>
                       <li>Carpet 11,000 sq ft</li>
                       <li>1,600 sq ft kitchen</li>
-                      <li>Cooking utensils as per attached list</li>
+                      <li>Cooking utensils</li>
                     </ul>
                   </div>
                 </div>
@@ -576,101 +591,94 @@ const OlderBookings = () => {
                     <p><strong>{t('Pre-Booking:', 'पूर्व बुकिंग:')}</strong> ₹{selectedBill.pre_booking_amount.toLocaleString()}</p>
                   )}
                   <p className="text-xl font-bold maroon-text">
-                    <strong>{t('Balance Due:', 'उर्वरित:')}(Corrected)</strong> ₹{(selectedBill.total_amount - (selectedBill.pre_booking_amount || 0) - (selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0)).toLocaleString()}
+                    <strong>{t('Balance Due:', 'उर्वरित:')}${' '}</strong> ₹{(selectedBill.total_amount - (selectedBill.pre_booking_amount || 0) - (selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0)).toLocaleString()}
                   </p>
                 </div>
 
                 {/* Deposits Section */}
                 <div className="mt-8 border-t pt-6">
                   <h3 className="playfair text-xl font-bold maroon-text mb-4">{t('Deposits History', 'ठेवींचा इतिहास')}</h3>
-                  <div className="bg-gray-50 p-4 rounded-xl mb-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Amount', 'रक्कम')}</label>
-                        <input
-                          type="number"
-                          value={newDeposit.amount}
-                          onChange={(e) => setNewDeposit({ ...newDeposit, amount: e.target.value })}
-                          className="w-full px-3 py-2 border rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Mode', 'पद्धत')}</label>
-                        <div className="flex gap-2">
-                          <label className="flex items-center gap-1 text-xs">
-                            <input
-                              type="radio"
-                              name="mode"
-                              value="cash"
-                              checked={newDeposit.paymentMode === 'cash'}
-                              onChange={(e) => setNewDeposit({ ...newDeposit, paymentMode: e.target.value })}
-                            />
-                            {t('Cash', 'रोख')}
-                          </label>
-                          <label className="flex items-center gap-1 text-xs">
-                            <input
-                              type="radio"
-                              name="mode"
-                              value="online"
-                              checked={newDeposit.paymentMode === 'online'}
-                              onChange={(e) => setNewDeposit({ ...newDeposit, paymentMode: e.target.value })}
-                            />
-                            {t('Online', 'ऑनलाईन')}
-                          </label>
+                  {!isExporting && (
+                    <div className="bg-gray-50 p-4 rounded-xl mb-6">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Amount', 'रक्कम')}</label>
+                          <input
+                            type="number"
+                            value={newDeposit.amount}
+                            onChange={(e) => setNewDeposit({ ...newDeposit, amount: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-lg"
+                          />
                         </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Mode', 'पद्धत')}</label>
+                          <div className="flex gap-2">
+                            <label className="flex items-center gap-1 text-xs">
+                              <input
+                                type="radio"
+                                name="mode"
+                                value="cash"
+                                checked={newDeposit.paymentMode === 'cash'}
+                                onChange={(e) => setNewDeposit({ ...newDeposit, paymentMode: e.target.value })}
+                              />
+                              {t('Cash', 'रोख')}
+                            </label>
+                            <label className="flex items-center gap-1 text-xs">
+                              <input
+                                type="radio"
+                                name="mode"
+                                value="online"
+                                checked={newDeposit.paymentMode === 'online'}
+                                onChange={(e) => setNewDeposit({ ...newDeposit, paymentMode: e.target.value })}
+                              />
+                              {t('Online', 'ऑनलाईन')}
+                            </label>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Desc', 'वर्णन')}</label>
+                          <input
+                            type="text"
+                            value={newDeposit.description}
+                            onChange={(e) => setNewDeposit({ ...newDeposit, description: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-lg"
+                          />
+                        </div>
+                        <button
+                          onClick={async () => {
+                            if (!newDeposit.amount || parseFloat(newDeposit.amount) <= 0) {
+                              toast.error(t('Please enter valid amount', 'कृपया वैध रक्कम प्रविष्ट करा'));
+                              return;
+                            }
+                            const deposit = {
+                              ...newDeposit,
+                              amount: parseFloat(newDeposit.amount),
+                              timestamp: new Date(newDeposit.timestamp).toISOString()
+                            };
+                            const newDeposits = [...(selectedBill.deposits || []), deposit];
+                            const depositsSum = newDeposits.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
+                            const updatedBill = {
+                              ...selectedBill,
+                              deposits: newDeposits,
+                              balance_due: selectedBill.total_amount - (selectedBill.pre_booking_amount || 0) - depositsSum
+                            };
+                            try {
+                              await axios.put(`${API}/bills/${selectedBill.id}`, updatedBill, getAuthHeaders());
+                              toast.success(t('Added!', 'जोडले!'));
+                              setSelectedBill(updatedBill);
+                              fetchBills();
+                              setNewDeposit({ amount: '', paymentMode: 'cash', description: '', timestamp: new Date().toISOString().split('T')[0] });
+                            } catch (err) {
+                              toast.error(t('Error', 'त्रुटी'));
+                            }
+                          }}
+                          className="px-4 py-2 bg-[#D4AF37] text-white rounded-lg hover:bg-[#B8941F] mb-0.5 whitespace-nowrap"
+                        >
+                          {t('Add', 'जोडा')}
+                        </button>
                       </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Desc', 'वर्णन')}</label>
-                        <input
-                          type="text"
-                          value={newDeposit.description}
-                          onChange={(e) => setNewDeposit({ ...newDeposit, description: e.target.value })}
-                          className="w-full px-3 py-2 border rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Date', 'तारीख')}</label>
-                        <input
-                          type="date"
-                          value={newDeposit.timestamp}
-                          onChange={(e) => setNewDeposit({ ...newDeposit, timestamp: e.target.value })}
-                          className="w-full px-3 py-2 border rounded-lg text-xs"
-                        />
-                      </div>
-                      <button
-                        onClick={async () => {
-                          if (!newDeposit.amount || parseFloat(newDeposit.amount) <= 0) {
-                            toast.error(t('Please enter valid amount', 'कृपया वैध रक्कम प्रविष्ट करा'));
-                            return;
-                          }
-                          const deposit = {
-                            ...newDeposit,
-                            amount: parseFloat(newDeposit.amount),
-                            timestamp: new Date(newDeposit.timestamp).toISOString()
-                          };
-                          const newDeposits = [...(selectedBill.deposits || []), deposit];
-                          const depositsSum = newDeposits.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
-                          const updatedBill = {
-                            ...selectedBill,
-                            deposits: newDeposits,
-                            balance_due: selectedBill.total_amount - (selectedBill.pre_booking_amount || 0) - depositsSum
-                          };
-                          try {
-                            await axios.put(`${API}/bills/${selectedBill.id}`, updatedBill, getAuthHeaders());
-                            toast.success(t('Added!', 'जोडले!'));
-                            setSelectedBill(updatedBill);
-                            fetchBills();
-                            setNewDeposit({ amount: '', paymentMode: 'cash', description: '', timestamp: new Date().toISOString().split('T')[0] });
-                          } catch (err) {
-                            toast.error(t('Error', 'त्रुटी'));
-                          }
-                        }}
-                        className="px-4 py-2 bg-[#D4AF37] text-white rounded-lg hover:bg-[#B8941F] mb-0.5"
-                      >
-                        {t('Add', 'जोडा')}
-                      </button>
                     </div>
-                  </div>
+                  )}
 
                   <table className="w-full text-xs border-collapse">
                     <thead>
@@ -679,7 +687,7 @@ const OlderBookings = () => {
                         <th className="border p-2 text-left">{t('Mode', 'पद्धत')}</th>
                         <th className="border p-2 text-left">{t('Desc', 'वर्णन')}</th>
                         <th className="border p-2 text-right">{t('Amount', 'रक्कम')}</th>
-                        <th className="border p-2 text-center">{t('Act', 'क्रिया')}</th>
+                        {!isExporting && <th className="border p-2 text-center">{t('Act', 'क्रिया')}</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -690,28 +698,30 @@ const OlderBookings = () => {
                             <td className="border p-2">{t(dep.paymentMode, dep.paymentMode === 'cash' ? 'रोख' : 'ऑनलाईन')}</td>
                             <td className="border p-2">{dep.description || '-'}</td>
                             <td className="border p-2 text-right font-bold">₹{dep.amount.toLocaleString()}</td>
-                            <td className="border p-2 text-center text-red-500 cursor-pointer" onClick={async () => {
-                              if (window.confirm(t('Are you sure?', 'तुम्हाला खात्री आहे?'))) {
-                                const newDeposits = selectedBill.deposits.filter((_, i) => i !== midx);
-                                const depositsSum = newDeposits.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
-                                const updatedBill = {
-                                  ...selectedBill,
-                                  deposits: newDeposits,
-                                  balance_due: selectedBill.total_amount - (selectedBill.pre_booking_amount || 0) - depositsSum
-                                };
-                                try {
-                                  await axios.put(`${API}/bills/${selectedBill.id}`, updatedBill, getAuthHeaders());
-                                  setSelectedBill(updatedBill);
-                                  fetchBills();
-                                  toast.success(t('Deleted', 'काढून टाकले'));
-                                } catch (e) { toast.error('Error'); }
-                              }
-                            }}>🗑️</td>
+                            {!isExporting && (
+                              <td className="border p-2 text-center text-red-500 cursor-pointer" onClick={async () => {
+                                if (window.confirm(t('Are you sure?', 'तुम्हाला खात्री आहे?'))) {
+                                  const newDeposits = selectedBill.deposits.filter((_, i) => i !== midx);
+                                  const depositsSum = newDeposits.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
+                                  const updatedBill = {
+                                    ...selectedBill,
+                                    deposits: newDeposits,
+                                    balance_due: selectedBill.total_amount - (selectedBill.pre_booking_amount || 0) - depositsSum
+                                  };
+                                  try {
+                                    await axios.put(`${API}/bills/${selectedBill.id}`, updatedBill, getAuthHeaders());
+                                    setSelectedBill(updatedBill);
+                                    fetchBills();
+                                    toast.success(t('Deleted', 'काढून टाकले'));
+                                  } catch (e) { toast.error('Error'); }
+                                }
+                              }}>🗑️</td>
+                            )}
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={4} className="border p-4 text-center text-gray-400">{t('No deposits yet', 'अद्याप एकही ठेव नाही')}</td>
+                          <td colSpan={isExporting ? 4 : 5} className="border p-4 text-center text-gray-400">{t('No deposits yet', 'अद्याप एकही ठेव नाही')}</td>
                         </tr>
                       )}
                     </tbody>
@@ -719,6 +729,7 @@ const OlderBookings = () => {
                       <tr className="bg-gray-50 font-bold">
                         <td colSpan={4} className="border p-2 text-right">{t('Total Paid:', 'एकूण भरलेले:')}</td>
                         <td className="border p-2 text-right">₹{(selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0).toLocaleString()}</td>
+                        {!isExporting && <td className="border p-2"></td>}
                       </tr>
                     </tfoot>
                   </table>
