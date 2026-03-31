@@ -308,9 +308,9 @@ const BillGeneration = () => {
     const hallRent = billData.show_hall_rent ? (parseInt(billData.hall_rent) || 0) : 0;
     const discount = parseInt(billData.discount) || 0;
     const preBooking = parseInt(billData.pre_booking_amount) || 0;
-
+    const depositsTotal = (billData.deposits || []).reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
     const total = servicesTotal + thaliTotal + hallRent + customChargesTotal - discount;
-    const balance = total - preBooking;
+    const balance = total - preBooking - depositsTotal;
 
     setBillData(prev => ({
       ...prev,
