@@ -183,7 +183,10 @@ const BillGeneration = () => {
     if (billData.manual_total && billData.manual_balance) return;
 
     const servicesTotal = billData.services.reduce(
-      (sum, s) => sum + (s.price * s.quantity),
+      (sum, s) => {
+        const rowTotal = s.total !== undefined ? s.total : (s.price * s.quantity);
+        return sum + rowTotal;
+      },
       0
     );
     // Thali calculation: Price per plate * Total plates
@@ -231,7 +234,16 @@ const BillGeneration = () => {
     setBillData({
       ...billData,
       services: billData.services.map(s =>
-        s.id === serviceId ? { ...s, price: parseInt(price) || 0 } : s
+        s.id === serviceId ? { ...s, price: parseInt(price) || 0, total: (parseInt(price) || 0) * s.quantity } : s
+      )
+    });
+  };
+
+  const updateServiceTotal = (serviceId, total) => {
+    setBillData({
+      ...billData,
+      services: billData.services.map(s =>
+        s.id === serviceId ? { ...s, total: parseInt(total) || 0 } : s
       )
     });
   };
@@ -392,7 +404,7 @@ const BillGeneration = () => {
                   <td className="border p-2">{lang === 'en' ? service.name : service.name_mr}</td>
                   <td className="border p-2 text-right">{service.quantity}</td>
                   <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
-                  <td className="border p-2 text-right">₹{(service.price * service.quantity).toLocaleString()}</td>
+                  <td className="border p-2 text-right">₹{(service.total !== undefined ? service.total : (service.price * service.quantity)).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -516,7 +528,8 @@ const BillGeneration = () => {
                   type="number"
                   value={billData.num_guests}
                   onChange={(e) => setBillData({ ...billData, num_guests: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  onWheel={(e) => e.target.blur()}
+                  className="w-full px-4 py-2 border rounded-lg simple-number-box"
                   required
                   data-testid="guests-input"
                 />
@@ -542,7 +555,8 @@ const BillGeneration = () => {
                   type="number"
                   value={billData.hall_rent}
                   onChange={(e) => setBillData({ ...billData, hall_rent: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  onWheel={(e) => e.target.blur()}
+                  className="w-full px-4 py-2 border rounded-lg simple-number-box"
                   required
                   data-testid="hall-rent-input"
                 />
@@ -596,7 +610,8 @@ const BillGeneration = () => {
                       updated[idx] = { ...updated[idx], amount: parseInt(e.target.value) || 0 };
                       setBillData({ ...billData, custom_charges: updated });
                     }}
-                    className="px-3 py-2 border rounded-lg"
+                    onWheel={(e) => e.target.blur()}
+                    className="px-3 py-2 border rounded-lg simple-number-box"
                   />
                   <button
                     type="button"
@@ -619,7 +634,8 @@ const BillGeneration = () => {
                   type="number"
                   value={billData.discount}
                   onChange={(e) => setBillData({ ...billData, discount: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  onWheel={(e) => e.target.blur()}
+                  className="w-full px-4 py-2 border rounded-lg simple-number-box"
                   data-testid="discount-input"
                 />
               </div>
@@ -629,7 +645,8 @@ const BillGeneration = () => {
                   type="number"
                   value={billData.pre_booking_amount}
                   onChange={(e) => setBillData({ ...billData, pre_booking_amount: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  onWheel={(e) => e.target.blur()}
+                  className="w-full px-4 py-2 border rounded-lg simple-number-box"
                   data-testid="pre-booking-input"
                 />
               </div>
@@ -674,7 +691,8 @@ const BillGeneration = () => {
                               type="number"
                               value={service.price}
                               onChange={(e) => updateServicePrice(service.id, e.target.value)}
-                              className="w-24 px-2 py-1 border rounded text-center"
+                              onWheel={(e) => e.target.blur()}
+                              className="w-24 px-2 py-1 border rounded text-center simple-number-box"
                               min="0"
                             />
                           </td>
@@ -683,12 +701,20 @@ const BillGeneration = () => {
                               type="number"
                               value={service.quantity}
                               onChange={(e) => updateServiceQuantity(service.id, e.target.value)}
-                              className="w-20 px-2 py-1 border rounded text-center"
+                              onWheel={(e) => e.target.blur()}
+                              className="w-20 px-2 py-1 border rounded text-center simple-number-box"
                               min="1"
                             />
                           </td>
-                          <td className="px-3 py-2 text-right font-semibold">
-                            ₹{(service.price * service.quantity).toLocaleString()}
+                          <td className="px-3 py-2 text-right">
+                            <input
+                              type="number"
+                              value={service.total !== undefined ? service.total : (service.price * service.quantity)}
+                              onChange={(e) => updateServiceTotal(service.id, e.target.value)}
+                              onWheel={(e) => e.target.blur()}
+                              className="w-28 px-2 py-1 border rounded text-right font-semibold simple-number-box"
+                              min="0"
+                            />
                           </td>
                           <td className="px-3 py-2 text-center">
                             <button
@@ -703,7 +729,10 @@ const BillGeneration = () => {
                       <tr className="border-t bg-gray-50 font-bold">
                         <td colSpan={3} className="px-3 py-2 text-right">{t('Services Total:', 'सेवा एकूण:')}</td>
                         <td className="px-3 py-2 text-right">
-                          ₹{billData.services.reduce((sum, s) => sum + (s.price * s.quantity), 0).toLocaleString()}
+                          ₹{billData.services.reduce((sum, s) => {
+                            const rowTotal = s.total !== undefined ? s.total : (s.price * s.quantity);
+                            return sum + rowTotal;
+                          }, 0).toLocaleString()}
                         </td>
                         <td></td>
                       </tr>
@@ -723,7 +752,8 @@ const BillGeneration = () => {
                     type="number"
                     value={billData.thali_price_per_plate}
                     onChange={(e) => setBillData({ ...billData, thali_price_per_plate: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg"
+                    onWheel={(e) => e.target.blur()}
+                    className="w-full px-4 py-2 border rounded-lg simple-number-box"
                     placeholder="Rate"
                   />
                 </div>
@@ -733,7 +763,8 @@ const BillGeneration = () => {
                     type="number"
                     value={billData.thali_total_plates}
                     onChange={(e) => setBillData({ ...billData, thali_total_plates: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg"
+                    onWheel={(e) => e.target.blur()}
+                    className="w-full px-4 py-2 border rounded-lg simple-number-box"
                     placeholder="Quantity"
                   />
                 </div>

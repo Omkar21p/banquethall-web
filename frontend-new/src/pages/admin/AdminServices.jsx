@@ -191,7 +191,8 @@ const AdminServices = () => {
                   type="number"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  onWheel={(e) => e.target.blur()}
+                  className="w-full px-4 py-2 border rounded-lg simple-number-box"
                   data-testid="service-price-input"
                 />
               </div>

@@ -292,7 +292,8 @@ const HallSettings = () => {
                   type="number"
                   value={hallData.capacity}
                   onChange={(e) => setHallData({ ...hallData, capacity: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  onWheel={(e) => e.target.blur()}
+                  className="w-full px-4 py-2 border rounded-lg simple-number-box"
                   data-testid="hall-capacity-input"
                 />
               </div>
@@ -302,7 +303,8 @@ const HallSettings = () => {
                   type="number"
                   value={hallData.approx_rent}
                   onChange={(e) => setHallData({ ...hallData, approx_rent: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  onWheel={(e) => e.target.blur()}
+                  className="w-full px-4 py-2 border rounded-lg simple-number-box"
                   data-testid="hall-rent-input"
                 />
               </div>
