@@ -162,6 +162,32 @@ const BillGeneration = () => {
 
     const hall = halls.find(h => h.id === billData.hall_id);
 
+    // Prepare imported services from event manager
+    const importedServices = (booking.event_services || []).map((s, idx) => ({
+      id: `imported_${booking.id}_${idx}`,
+      name: `${s.serviceType} (${s.providerName})`,
+      name_mr: `${s.serviceType} (${s.providerName})`,
+      price: s.amount,
+      quantity: 1,
+      total: s.amount,
+      isImported: true
+    }));
+
+    // Prepare imported custom charges
+    const importedCharges = [];
+    if (booking.service_bill?.extraCharges > 0) {
+      importedCharges.push({
+        label: `Extra Charges (Event Manager)`,
+        label_mr: `अतिरिक्त शुल्क (इव्हेंट मॅनेजर)`,
+        amount: booking.service_bill.extraCharges,
+        isImported: true
+      });
+    }
+
+    // Combine discounts
+    const serviceBillDiscount = booking.service_bill?.discount || 0;
+    const currentDiscount = parseInt(billData.discount) || 0;
+
     setBillData(prev => ({
       ...prev,
       booking_id: booking.id,
@@ -172,8 +198,16 @@ const BillGeneration = () => {
       event_date: booking.date,
       event_type: booking.event_type,
       num_guests: booking.num_guests,
-      hall_rent: hall?.approx_rent || prev.hall_rent
+      hall_rent: hall?.approx_rent || prev.hall_rent,
+      // Merge services and charges (replace previously imported ones if any)
+      services: [...prev.services.filter(s => !s.isImported), ...importedServices],
+      custom_charges: [...prev.custom_charges.filter(c => !c.isImported), ...importedCharges],
+      discount: (currentDiscount + serviceBillDiscount).toString()
     }));
+
+    if (importedServices.length > 0 || serviceBillDiscount > 0 || importedCharges.length > 0) {
+      toast.info(t('Imported existing service bill from Event Manager', 'इव्हेंट मॅनेजरकडून विद्यमान सेवा बिल आयात केले'));
+    }
   };
 
   const calculateTotal = () => {
@@ -682,9 +716,10 @@ const BillGeneration = () => {
                     </thead>
                     <tbody>
                       {billData.services.map((service) => (
-                        <tr key={service.id} className="border-t hover:bg-gray-50">
+                        <tr key={service.id} className={`border-t hover:bg-gray-50 ${service.isImported ? 'bg-blue-50/50' : ''}`}>
                           <td className="px-3 py-2 font-medium">
                             {language === 'en' ? service.name : service.name_mr}
+                            {service.isImported && <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1 rounded font-bold uppercase">{t('Imported', 'आयात केलेले')}</span>}
                           </td>
                           <td className="px-3 py-2 text-center">
                             <input
