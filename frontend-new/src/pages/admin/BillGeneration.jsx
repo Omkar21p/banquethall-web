@@ -66,6 +66,54 @@ const BillGeneration = () => {
       const response = await axios.get(`${API}/bills`, getAuthHeaders());
       const bill = response.data.find(b => b.id === billId);
       if (bill) {
+        // Find associated booking latest data
+        let latestBooking = null;
+        if (bill.booking_id) {
+          try {
+            const bookingsRes = await axios.get(`${API}/bookings?hall_id=${bill.hall_id}`, getAuthHeaders());
+            latestBooking = bookingsRes.data.find(b => b.id === bill.booking_id);
+          } catch (e) { console.error("Error fetching linked booking during bill load:", e); }
+        }
+
+        // Logic to merge latest booking services
+        let finalServices = bill.services || [];
+        let finalCharges = bill.custom_charges || [];
+
+        if (latestBooking) {
+          const importedServices = (latestBooking.event_services || []).map((s, idx) => ({
+            id: `imported_${latestBooking.id}_${idx}`,
+            name: `${s.serviceType} (${s.providerName})`,
+            name_mr: `${s.serviceType} (${s.providerName})`,
+            price: s.amount,
+            quantity: 1,
+            total: s.amount,
+            isImported: true
+          }));
+
+          const importedCharges = [];
+          if (latestBooking.service_bill?.extraCharges > 0) {
+            importedCharges.push({
+              label: `Extra Charges (Event Manager)`,
+              label_mr: `अतिरिक्त शुल्क (इव्हेंट मॅनेजर)`,
+              amount: latestBooking.service_bill.extraCharges,
+              isImported: true
+            });
+          }
+
+          // Merge services and charges (replace previously imported ones if any)
+          const updatedServices = [...(bill.services || []).filter(s => !s.isImported), ...importedServices];
+          const updatedCharges = [...(bill.custom_charges || []).filter(c => !c.isImported), ...importedCharges];
+
+          // Check for changes to alert the user
+          if (JSON.stringify(updatedServices) !== JSON.stringify(bill.services)) {
+            finalServices = updatedServices;
+            toast.info(t('Linked booking updated! Imported new services from Event Manager.', 'इव्हेंट मॅनेजरमधील नवीन सेवा अपडेट झाल्या आहेत.'));
+          }
+          if (JSON.stringify(updatedCharges) !== JSON.stringify(bill.custom_charges)) {
+            finalCharges = updatedCharges;
+          }
+        }
+
         // Ensure all fields have safe defaults for old bills
         setBillData({
           ...bill,
@@ -74,12 +122,12 @@ const BillGeneration = () => {
           hall_rent: bill.hall_rent || '',
           discount: bill.discount || '0',
           pre_booking_amount: bill.pre_booking_amount || '0',
-          services: bill.services || [],
+          services: finalServices,
           thali_items: bill.thali_items || [],
-          custom_charges: bill.custom_charges || [],
+          custom_charges: finalCharges,
           deposits: bill.deposits || [],
           show_hall_rent: bill.show_hall_rent !== undefined ? bill.show_hall_rent : true,
-          // Preserve the stored totals
+          // Preserve the stored totals initially
           total_amount: bill.total_amount,
           balance_due: bill.balance_due
         });
