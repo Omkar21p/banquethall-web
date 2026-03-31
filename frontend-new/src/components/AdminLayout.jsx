@@ -70,15 +70,15 @@ const AdminLayout = ({ children }) => {
 
       {/* Sidebar - responsive classes */}
       <aside className={`
-        fixed md:static inset-y-0 left-0 z-50 w-64 admin-sidebar text-white transform transition-transform duration-300 ease-in-out
+        fixed md:static inset-y-0 left-0 z-50 w-64 admin-sidebar text-white transform transition-transform duration-300 ease-in-out flex flex-col h-full
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-        <div className="p-6">
+        <div className="p-6 flex-shrink-0">
           <h2 className="playfair text-2xl font-bold mb-2">{admin.hall_name}</h2>
           <p className="text-sm opacity-90">{admin.username}</p>
         </div>
 
-        <nav className="mt-6">
+        <nav className="mt-2 flex-grow overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -97,14 +97,16 @@ const AdminLayout = ({ children }) => {
           })}
         </nav>
 
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-6 py-3 mt-auto absolute bottom-6 left-0 w-64 hover:bg-[#600000] transition-colors"
-          data-testid="logout-btn"
-        >
-          <LogOut size={20} />
-          <span>{t('Logout', 'लॉगआउट')}</span>
-        </button>
+        <div className="mt-auto border-t border-white/10 p-2">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-6 py-4 w-full hover:bg-[#600000] transition-colors rounded-lg"
+            data-testid="logout-btn"
+          >
+            <LogOut size={20} />
+            <span>{t('Logout', 'लॉगआउट')}</span>
+          </button>
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col overflow-hidden">

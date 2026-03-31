@@ -44,6 +44,10 @@ const BillGeneration = () => {
     total_amount: 0,
     balance_due: 0,
     deposits: [],
+    arrival_date: '',
+    departure_date: '',
+    arrival_time: '06:00 PM',
+    departure_time: '10:00 PM',
     manual_total: false,
     manual_balance: false,
     customized: false
@@ -112,8 +116,25 @@ const BillGeneration = () => {
     billData.show_hall_rent,
     billData.custom_charges,
     billData.discount,
-    billData.pre_booking_amount
+    billData.discount,
+    billData.pre_booking_amount,
+    billData.event_date
   ]);
+
+  useEffect(() => {
+    if (billData.event_date) {
+      const eventDate = new Date(billData.event_date);
+      if (!isNaN(eventDate)) {
+        const arrivalDate = new Date(eventDate);
+        arrivalDate.setDate(eventDate.getDate() - 1);
+        setBillData(prev => ({
+          ...prev,
+          arrival_date: arrivalDate.toISOString().split('T')[0],
+          departure_date: billData.event_date
+        }));
+      }
+    }
+  }, [billData.event_date]);
 
   const fetchHalls = async () => {
     try {
@@ -372,11 +393,32 @@ const BillGeneration = () => {
               <p><strong>{t_bill('Customer Name:', 'ग्राहक नाव:')}</strong> {billData.customer_name}</p>
               <p><strong>{t_bill('City:', 'शहर:')}</strong> {billData.customer_city}</p>
               <p><strong>{t_bill('Number of Guests:', 'पाहुण्यांची संख्या:')}</strong> {billData.num_guests}</p>
+              <p><strong>{t_bill('Event Type:', 'कार्यक्रम प्रकार:')}</strong> {billData.event_type}</p>
             </div>
             <div>
-              <p><strong>{t_bill('Booking Date:', 'बुकिंग तारीख:')}</strong> {billData.booking_date}</p>
+              <p><strong>{t_bill('Arrival:', 'हॉलमध्ये आगमन:')}</strong> {billData.arrival_date} ({billData.arrival_time})</p>
+              <p><strong>{t_bill('Departure:', 'हॉलमधून प्रस्थान:')}</strong> {billData.departure_date} ({billData.departure_time})</p>
               <p><strong>{t_bill('Event Date:', 'कार्यक्रम तारीख:')}</strong> {billData.event_date}</p>
-              <p><strong>{t_bill('Event Type:', 'कार्यक्रम प्रकार:')}</strong> {billData.event_type}</p>
+              <p><strong>{t_bill('Booking Date:', 'बुकिंग तारीख:')}</strong> {billData.booking_date}</p>
+            </div>
+          </div>
+
+          <div className="mb-6 p-4 bg-gray-50 border rounded-lg">
+            <h3 className="font-bold maroon-text mb-2 border-b-2 border-[#D4AF37] inline-block">{t_bill('Karyalay Package', 'कार्यालय पॅकेज')}</h3>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+              <ul className="list-disc pl-4 space-y-1">
+                <li>11,000 sq. ft hall</li>
+                <li>3,000 sq ft V.I.P Dinning hall</li>
+                <li>6,500 sq ft Open dinning hall</li>
+                <li>500 chairs</li>
+                <li>12 wall fans</li>
+              </ul>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>AC Room - 2</li>
+                <li>Carpet 11,000 sq ft</li>
+                <li>1,600 sq ft kitchen</li>
+                <li>Cooking utensils as per attached list</li>
+              </ul>
             </div>
           </div>
 
@@ -504,7 +546,7 @@ const BillGeneration = () => {
       <div className="space-y-6">
         {!showPreview ? (
           <div className="bg-white p-6 rounded-xl shadow-lg">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-semibold mb-2">{t('Select Hall', 'हॉल निवडा')}</label>
                 <select
@@ -544,7 +586,7 @@ const BillGeneration = () => {
                   type="text"
                   value={billData.customer_name}
                   onChange={(e) => setBillData({ ...billData, customer_name: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[#800000] outline-none"
                   required
                   data-testid="customer-name-input"
                 />
@@ -555,7 +597,7 @@ const BillGeneration = () => {
                   type="text"
                   value={billData.customer_city}
                   onChange={(e) => setBillData({ ...billData, customer_city: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[#800000] outline-none"
                   required
                   data-testid="city-input"
                 />
@@ -566,7 +608,7 @@ const BillGeneration = () => {
                   type="date"
                   value={billData.booking_date}
                   onChange={(e) => setBillData({ ...billData, booking_date: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[#800000] outline-none"
                   required
                   data-testid="booking-date-input"
                 />
@@ -577,10 +619,54 @@ const BillGeneration = () => {
                   type="date"
                   value={billData.event_date}
                   onChange={(e) => setBillData({ ...billData, event_date: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[#800000] outline-none"
                   required
                   data-testid="event-date-input"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">{t('Arrival Date', 'आगमन तारीख')}</label>
+                <input
+                  type="date"
+                  value={billData.arrival_date}
+                  onChange={(e) => setBillData({ ...billData, arrival_date: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[#800000] outline-none"
+                  data-testid="arrival-date-input"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">{t('Arrival Time', 'आगमन वेळ')}</label>
+                <select
+                  value={billData.arrival_time}
+                  onChange={(e) => setBillData({ ...billData, arrival_time: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[#800000] outline-none"
+                >
+                  <option value="06:00 PM">06:00 PM</option>
+                  <option value="10:00 AM">10:00 AM</option>
+                  <option value="02:00 PM">02:00 PM</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">{t('Departure Date', 'प्रस्थान तारीख')}</label>
+                <input
+                  type="date"
+                  value={billData.departure_date}
+                  onChange={(e) => setBillData({ ...billData, departure_date: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[#800000] outline-none"
+                  data-testid="departure-date-input"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">{t('Departure Time', 'प्रस्थान वेळ')}</label>
+                <select
+                  value={billData.departure_time}
+                  onChange={(e) => setBillData({ ...billData, departure_time: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[#800000] outline-none"
+                >
+                  <option value="10:00 PM">10:00 PM</option>
+                  <option value="08:00 AM">08:00 AM</option>
+                  <option value="04:00 PM">04:00 PM</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-2">{t('Number of Guests', 'पाहुण्यांची संख्या')}</label>
@@ -589,7 +675,7 @@ const BillGeneration = () => {
                   value={billData.num_guests}
                   onChange={(e) => setBillData({ ...billData, num_guests: e.target.value })}
                   onWheel={(e) => e.target.blur()}
-                  className="w-full px-4 py-2 border rounded-lg simple-number-box"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg simple-number-box focus:border-[#800000] outline-none"
                   required
                   data-testid="guests-input"
                 />
@@ -599,7 +685,7 @@ const BillGeneration = () => {
                 <select
                   value={billData.event_type}
                   onChange={(e) => setBillData({ ...billData, event_type: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg marathi-text"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg marathi-text focus:border-[#800000] outline-none"
                   data-testid="event-type-select"
                 >
                   <option value="लग्न">लग्न (Wedding)</option>
