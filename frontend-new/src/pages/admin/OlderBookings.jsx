@@ -425,6 +425,7 @@ const OlderBookings = () => {
                 <tr>
                   <th className="px-6 py-3 text-left">{t('Customer', 'ग्राहक')}</th>
                   <th className="px-6 py-3 text-left">{t('Hall', 'हॉल')}</th>
+                  <th className="px-6 py-3 text-left">{t('Created At', 'तैयार केल्याची तारीख')}</th>
                   <th className="px-6 py-3 text-left">{t('Event Date', 'कार्यक्रम तारीख')}</th>
                   <th className="px-6 py-3 text-left">{t('Event Type', 'कार्यक्रम प्रकार')}</th>
                   <th className="px-6 py-3 text-right">{t('Total', 'कुल')}</th>
@@ -449,6 +450,9 @@ const OlderBookings = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">{bill.hall_name}</td>
+                      <td className="px-6 py-4 text-xs">
+                        {bill.created_at ? new Date(bill.created_at).toLocaleDateString(language === 'en' ? 'en-IN' : 'mr-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                      </td>
                       <td className="px-6 py-4">{bill.event_date}</td>
                       <td className="px-6 py-4">{bill.event_type}</td>
                       <td className="px-6 py-4 text-right font-semibold">₹{bill.total_amount.toLocaleString()}</td>
@@ -546,20 +550,46 @@ const OlderBookings = () => {
                     </tr>
                     {selectedBill.custom_charges && selectedBill.custom_charges.length > 0 && selectedBill.custom_charges.map((charge, idx) => (
                       <tr key={`charge-${idx}`}>
-                        <td className="border p-2">{language === 'en' ? charge.label : charge.label_mr}</td>
+                        <td className="border p-2">{language === 'en' ? charge.label : charge.label_mr} {charge.isImported && <span className="text-[8px] bg-blue-100 text-blue-700 px-1 rounded ml-1 font-bold">EVENT MGMT</span>}</td>
                         <td className="border p-2 text-right">1</td>
                         <td className="border p-2 text-right">₹{charge.amount.toLocaleString()}</td>
                         <td className="border p-2 text-right">₹{charge.amount.toLocaleString()}</td>
                       </tr>
                     ))}
-                    {selectedBill.services.map((service, idx) => (
-                      <tr key={idx}>
-                        <td className="border p-2">{language === 'en' ? service.name : service.name_mr}</td>
-                        <td className="border p-2 text-right">{service.quantity}</td>
-                        <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
-                        <td className="border p-2 text-right">₹{(service.price * service.quantity).toLocaleString()}</td>
-                      </tr>
-                    ))}
+                    
+                    {/* Other Services */}
+                    {selectedBill.services.filter(s => !s.isImported).length > 0 && (
+                      <>
+                        <tr className="bg-gray-50/50">
+                          <td colSpan={4} className="border p-2 font-semibold text-xs text-gray-500 uppercase tracking-wider">{t('Other Services', 'इतर सेवा')}</td>
+                        </tr>
+                        {selectedBill.services.filter(s => !s.isImported).map((service, idx) => (
+                          <tr key={`reg-${idx}`}>
+                            <td className="border p-2">{language === 'en' ? service.name : service.name_mr}</td>
+                            <td className="border p-2 text-right">{service.quantity}</td>
+                            <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
+                            <td className="border p-2 text-right">₹{(service.price * service.quantity).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </>
+                    )}
+
+                    {/* Event Mgmt Services */}
+                    {selectedBill.services.filter(s => s.isImported).length > 0 && (
+                      <>
+                        <tr className="bg-blue-50/30">
+                          <td colSpan={4} className="border p-2 font-semibold text-xs text-blue-600 uppercase tracking-wider">{t('Event Management Services', 'इव्हेंट मॅनेजमेंट सेवा')}</td>
+                        </tr>
+                        {selectedBill.services.filter(s => s.isImported).map((service, idx) => (
+                          <tr key={`imp-${idx}`}>
+                            <td className="border p-2">{language === 'en' ? service.name : service.name_mr}</td>
+                            <td className="border p-2 text-right">{service.quantity}</td>
+                            <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
+                            <td className="border p-2 text-right">₹{(service.price * service.quantity).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </>
+                    )}
                     {/* Thali Package - grouped display */}
                     {((parseInt(selectedBill.thali_price_per_plate) > 0 && parseInt(selectedBill.thali_total_plates) > 0) || (selectedBill.thali_items && selectedBill.thali_items.length > 0)) && (
                       <>

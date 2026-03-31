@@ -427,20 +427,46 @@ const BillGeneration = () => {
 
               {billData.custom_charges.map((charge, idx) => (
                 <tr key={idx}>
-                  <td className="border p-2">{lang === 'en' ? charge.label : charge.label_mr}</td>
+                  <td className="border p-2">{lang === 'en' ? charge.label : charge.label_mr} {charge.isImported && <span className="text-[8px] bg-blue-100 text-blue-700 px-1 rounded ml-1 font-bold">EVENT MGMT</span>}</td>
                   <td className="border p-2 text-right">1</td>
                   <td className="border p-2 text-right">₹{charge.amount.toLocaleString()}</td>
                   <td className="border p-2 text-right">₹{charge.amount.toLocaleString()}</td>
                 </tr>
               ))}
-              {billData.services.map((service) => (
-                <tr key={service.id}>
-                  <td className="border p-2">{lang === 'en' ? service.name : service.name_mr}</td>
-                  <td className="border p-2 text-right">{service.quantity}</td>
-                  <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
-                  <td className="border p-2 text-right">₹{(service.total !== undefined ? service.total : (service.price * service.quantity)).toLocaleString()}</td>
-                </tr>
-              ))}
+              
+              {/* Regular Services */}
+              {billData.services.filter(s => !s.isImported).length > 0 && (
+                <>
+                  <tr className="bg-gray-50/50">
+                    <td colSpan={4} className="border p-2 font-semibold text-xs text-gray-500 uppercase tracking-wider">{t_bill('Other Services', 'इतर सेवा')}</td>
+                  </tr>
+                  {billData.services.filter(s => !s.isImported).map((service) => (
+                    <tr key={service.id}>
+                      <td className="border p-2">{lang === 'en' ? service.name : service.name_mr}</td>
+                      <td className="border p-2 text-right">{service.quantity}</td>
+                      <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
+                      <td className="border p-2 text-right">₹{(service.total !== undefined ? service.total : (service.price * service.quantity)).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </>
+              )}
+
+              {/* Imported Event Services */}
+              {billData.services.filter(s => s.isImported).length > 0 && (
+                <>
+                  <tr className="bg-blue-50/30">
+                    <td colSpan={4} className="border p-2 font-semibold text-xs text-blue-600 uppercase tracking-wider">{t_bill('Event Management Services', 'इव्हेंट मॅनेजमेंट सेवा')}</td>
+                  </tr>
+                  {billData.services.filter(s => s.isImported).map((service) => (
+                    <tr key={service.id}>
+                      <td className="border p-2">{lang === 'en' ? service.name : service.name_mr}</td>
+                      <td className="border p-2 text-right">{service.quantity}</td>
+                      <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
+                      <td className="border p-2 text-right">₹{(service.total !== undefined ? service.total : (service.price * service.quantity)).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </>
+              )}
             </tbody>
           </table>
 
@@ -715,11 +741,68 @@ const BillGeneration = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {billData.services.map((service) => (
-                        <tr key={service.id} className={`border-t hover:bg-gray-50 ${service.isImported ? 'bg-blue-50/50' : ''}`}>
+                      {/* Separate headings in edit table too */}
+                      {billData.services.filter(s => s.isImported).length > 0 && (
+                        <tr className="bg-blue-50 text-blue-800">
+                          <td colSpan={5} className="px-3 py-1 text-[10px] uppercase font-bold tracking-widest">{t('Event Management Services', 'इव्हेंट मॅनेजमेंट सेवा')}</td>
+                        </tr>
+                      )}
+                      {billData.services.filter(s => s.isImported).map((service) => (
+                        <tr key={service.id} className="border-t bg-blue-50/20 hover:bg-blue-50/40">
                           <td className="px-3 py-2 font-medium">
                             {language === 'en' ? service.name : service.name_mr}
                             {service.isImported && <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1 rounded font-bold uppercase">{t('Imported', 'आयात केलेले')}</span>}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <input
+                              type="number"
+                              value={service.price}
+                              onChange={(e) => updateServicePrice(service.id, e.target.value)}
+                              onWheel={(e) => e.target.blur()}
+                              className="w-24 px-2 py-1 border rounded text-center simple-number-box bg-white/50"
+                              min="0"
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <input
+                              type="number"
+                              value={service.quantity}
+                              onChange={(e) => updateServiceQuantity(service.id, e.target.value)}
+                              onWheel={(e) => e.target.blur()}
+                              className="w-20 px-2 py-1 border rounded text-center simple-number-box bg-white/50"
+                              min="1"
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <input
+                              type="number"
+                              value={service.total !== undefined ? service.total : (service.price * service.quantity)}
+                              onChange={(e) => updateServiceTotal(service.id, e.target.value)}
+                              onWheel={(e) => e.target.blur()}
+                              className="w-28 px-2 py-1 border rounded text-right font-semibold simple-number-box bg-white/50"
+                              min="0"
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <button
+                              onClick={() => removeService(service.id)}
+                              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                            >
+                              {t('Remove', 'काढा')}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+
+                      {billData.services.filter(s => !s.isImported).length > 0 && (
+                        <tr className="bg-gray-100 text-gray-700 border-t-2 border-gray-200">
+                          <td colSpan={5} className="px-3 py-1 text-[10px] uppercase font-bold tracking-widest">{t('Other Services', 'इतर सेवा')}</td>
+                        </tr>
+                      )}
+                      {billData.services.filter(s => !s.isImported).map((service) => (
+                        <tr key={service.id} className="border-t hover:bg-gray-50">
+                          <td className="px-3 py-2 font-medium">
+                            {language === 'en' ? service.name : service.name_mr}
                           </td>
                           <td className="px-3 py-2 text-center">
                             <input
