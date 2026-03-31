@@ -402,48 +402,137 @@ const BillGeneration = () => {
     }
   };
 
-  const handleDownloadPDF = async () => {
-    const element = billPreviewRef.current;
-    if (!element) return;
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    const margin = 14;
+    let finalY = 20;
+
+    // --- Header ---
+    doc.setFillColor(128, 0, 0); // Maroon
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text(billData.hall_name.toUpperCase(), 105, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text('FINAL INVOICE / फायनल बिल', 105, 30, { align: 'center' });
+
+    // --- Customer Info ---
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    finalY = 50;
+    doc.text(`Customer / ग्राहक: ${billData.customer_name}`, margin, finalY);
+    doc.text(`Event Date / तारीख: ${billData.event_date}`, 120, finalY);
     
-    try {
-      setIsExporting(true);
-      await new Promise(r => setTimeout(r, 100)); // wait for re-render
-      
-      const canvas = await html2canvas(element, { 
-        scale: 2, 
-        useCORS: true,
-        backgroundColor: '#ffffff'
-      });
-      
-      setIsExporting(false);
-      const imgData = canvas.toDataURL('image/png');
+    finalY += 7;
+    doc.text(`City / शहर: ${billData.customer_city}`, margin, finalY);
+    doc.text(`Booking Date / बुकिंग तारीख: ${billData.booking_date}`, 120, finalY);
 
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const margin = 10;
-      const imgWidth = 210 - (margin * 2);
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = margin;
+    finalY += 7;
+    doc.text(`Guests / पाहुणे: ${billData.num_guests}`, margin, finalY);
+    doc.text(`Event Type / कार्यक्रम: ${billData.event_type}`, 120, finalY);
 
-      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-      heightLeft -= (pageHeight - margin * 2);
+    // Arrival / Departure
+    finalY += 7;
+    if (billData.arrival_date) doc.text(`Arrival: ${billData.arrival_date} (06:00 PM)`, margin, finalY);
+    if (billData.departure_date) doc.text(`Departure: ${billData.departure_date}`, 120, finalY);
 
-      while (heightLeft > 0) {
-        position = (heightLeft - imgHeight) + margin;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-        heightLeft -= (pageHeight - margin * 2);
-      }
+    // --- Karyalay Package Section ---
+    finalY += 12;
+    doc.setFillColor(245, 245, 245);
+    doc.rect(margin, finalY, 182, 35, 'F');
+    doc.setTextColor(128, 0, 0);
+    doc.setFontSize(11);
+    doc.text('Karyalay Package / कार्यालय पॅकेज', margin + 5, finalY + 7);
+    
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(8);
+    const splitPoints = [
+      "- 11,000 sq. ft hall", "- 3,000 sq ft V.I.P Dinning hall", "- 6,500 sq ft Open dinning hall",
+      "- 500 chairs", "- 12 wall fans", "- AC Room - 2", 
+      "- Carpet 11,000 sq ft", "- 1,600 sq ft kitchen", "- Cooking utensils"
+    ];
+    
+    splitPoints.slice(0, 5).forEach((p, i) => doc.text(p, margin + 5, finalY + 15 + (i * 4)));
+    splitPoints.slice(5).forEach((p, i) => doc.text(p, margin + 80, finalY + 15 + (i * 4)));
+    
+    finalY += 42;
 
-    pdf.save(`bill-${billData.customer_name}-${billData.event_date}.pdf`);
-    } catch (err) {
-      console.error("PDF generation error:", err);
-      toast.error(t('Error', 'त्रुटी'));
-    } finally {
-      element.classList.remove('exporting-pdf');
+    // --- Main Items Table ---
+    const tableItems = [];
+    if (billData.show_hall_rent) {
+      tableItems.push(['Hall Rent / हॉल भाडे', '1', `Rs. ${billData.hall_rent.toLocaleString()}`, `Rs. ${billData.hall_rent.toLocaleString()}`]);
     }
+
+    if (billData.custom_charges) {
+      billData.custom_charges.forEach(c => {
+        tableItems.push([billLanguage === 'en' ? c.label : (c.label_mr || c.label), '1', `Rs. ${c.amount.toLocaleString()}`, `Rs. ${c.amount.toLocaleString()}`]);
+      });
+    }
+
+    billData.services.forEach(s => {
+      tableItems.push([billLanguage === 'en' ? s.name : (s.name_mr || s.name), s.quantity, `Rs. ${s.price.toLocaleString()}`, `Rs. ${(s.price * s.quantity).toLocaleString()}`]);
+    });
+
+    if (billData.thali_price_per_plate > 0) {
+      tableItems.push([`Thali Package (${billData.thali_total_plates} Plates)`, billData.thali_total_plates, `Rs. ${billData.thali_price_per_plate}`, `Rs. ${(billData.thali_price_per_plate * billData.thali_total_plates).toLocaleString()}`]);
+    }
+
+    doc.autoTable({
+      startY: finalY,
+      head: [['Description / तपशील', 'Qty / प्रमाण', 'Rate / दर', 'Amount / रक्कम']],
+      body: tableItems,
+      headStyles: { fillColor: [128, 0, 0] },
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      styles: { fontSize: 9 }
+    });
+
+    finalY = doc.lastAutoTable.finalY + 10;
+
+    // --- Financial Summary ---
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    if (parseInt(billData.discount) > 0) {
+      doc.text(`Discount / सूट: -Rs. ${parseInt(billData.discount).toLocaleString()}`, 200 - margin, finalY, { align: 'right' });
+      finalY += 6;
+    }
+    doc.setFontSize(11);
+    doc.text(`TOTAL AMOUNT / एकूण रक्कम: Rs. ${billData.total_amount.toLocaleString()}`, 200 - margin, finalY, { align: 'right' });
+    
+    finalY += 8;
+    doc.setTextColor(128, 0, 0);
+    doc.setFontSize(14);
+    doc.text(`BALANCE DUE / उर्वरित रक्कम: Rs. ${billData.balance_due.toLocaleString()}`, 200 - margin, finalY, { align: 'right' });
+
+    // --- Deposits History Table ---
+    if (billData.deposits && billData.deposits.length > 0) {
+      finalY += 15;
+      if (finalY > 250) { doc.addPage(); finalY = 20; }
+      
+      doc.setTextColor(128, 0, 0);
+      doc.setFontSize(12);
+      doc.text('Deposits History / भरलेली रक्कम', margin, finalY);
+      
+      const depData = billData.deposits.map(d => [
+        new Date(d.timestamp).toLocaleDateString(),
+        d.paymentMode === 'cash' ? 'Cash / रोख' : 'Online / ऑनलाईन',
+        d.description || '-',
+        `Rs. ${d.amount.toLocaleString()}`
+      ]);
+
+      doc.autoTable({
+        startY: finalY + 5,
+        head: [['Date / तारीख', 'Mode / पद्धत', 'Description / वर्णन', 'Amount / रक्कम']],
+        body: depData,
+        headStyles: { fillColor: [80, 80, 80] },
+        margin: { left: margin, right: margin },
+        theme: 'striped',
+        styles: { fontSize: 8 }
+      });
+    }
+
+    doc.save(`bill-${billData.customer_name}-${billData.event_date}.pdf`);
+    toast.success(t('PDF downloaded!', 'PDF डाऊनलोड झाले!'));
   };
 
   const handleShareWhatsApp = () => {

@@ -132,51 +132,139 @@ const OlderBookings = () => {
     toast.success(t('PDF exported!', 'PDF एक्सपोर्ट झाले!'));
   };
 
-  const handleDownloadSingleBillPDF = async (bill) => {
-    const element = billPreviewRef.current;
-    if (!element) {
-      toast.error(t('Error: Element not found', 'एरर: घटक आढळला नाही'));
-      return;
-    }
+  const handleDownloadSingleBillPDF = (bill) => {
+    const doc = new jsPDF();
+    const margin = 14;
+    let finalY = 20;
 
-    try {
-      setIsExporting(true);
-      // Wait a tick for React to re-render without inputs
-      await new Promise(r => setTimeout(r, 100));
-      
-      const canvas = await html2canvas(element, { 
-        scale: 2, 
-        useCORS: true,
-        backgroundColor: '#ffffff'
+    // --- Header ---
+    doc.setFillColor(128, 0, 0); // Maroon
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text(bill.hall_name.toUpperCase(), 105, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text('FINAL INVOICE / फायनल बिल', 105, 30, { align: 'center' });
+
+    // --- Customer Info ---
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    finalY = 50;
+    doc.text(`Customer / ग्राहक: ${bill.customer_name}`, margin, finalY);
+    doc.text(`Event Date / तारीख: ${bill.event_date}`, 120, finalY);
+    
+    finalY += 7;
+    doc.text(`City / शहर: ${bill.customer_city}`, margin, finalY);
+    doc.text(`Booking Date / बुकिंग तारीख: ${bill.booking_date}`, 120, finalY);
+
+    finalY += 7;
+    doc.text(`Guests / पाहुणे: ${bill.num_guests}`, margin, finalY);
+    doc.text(`Event Type / कार्यक्रम: ${bill.event_type}`, 120, finalY);
+
+    // Arrival / Departure
+    finalY += 7;
+    if (bill.arrival_date) doc.text(`Arrival: ${bill.arrival_date} (06:00 PM)`, margin, finalY);
+    if (bill.departure_date) doc.text(`Departure: ${bill.departure_date}`, 120, finalY);
+
+    // --- Karyalay Package Section ---
+    finalY += 12;
+    doc.setFillColor(245, 245, 245);
+    doc.rect(margin, finalY, 182, 35, 'F');
+    doc.setTextColor(128, 0, 0);
+    doc.setFontSize(11);
+    doc.text('Karyalay Package / कार्यालय पॅकेज', margin + 5, finalY + 7);
+    
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(8);
+    const splitPoints = [
+      "- 11,000 sq. ft hall", "- 3,000 sq ft V.I.P Dinning hall", "- 6,500 sq ft Open dinning hall",
+      "- 500 chairs", "- 12 wall fans", "- AC Room - 2", 
+      "- Carpet 11,000 sq ft", "- 1,600 sq ft kitchen", "- Cooking utensils"
+    ];
+    
+    // Draw columns for package
+    splitPoints.slice(0, 5).forEach((p, i) => doc.text(p, margin + 5, finalY + 15 + (i * 4)));
+    splitPoints.slice(5).forEach((p, i) => doc.text(p, margin + 80, finalY + 15 + (i * 4)));
+    
+    finalY += 42;
+
+    // --- Main Items Table ---
+    const tableItems = [
+      ['Hall Rent / हॉल भाडे', '1', `Rs. ${bill.hall_rent.toLocaleString()}`, `Rs. ${bill.hall_rent.toLocaleString()}`]
+    ];
+
+    if (bill.custom_charges) {
+      bill.custom_charges.forEach(c => {
+        tableItems.push([language === 'en' ? c.label : c.label_mr, '1', `Rs. ${c.amount.toLocaleString()}`, `Rs. ${c.amount.toLocaleString()}`]);
       });
-      
-      setIsExporting(false);
-      const imgData = canvas.toDataURL('image/png');
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const margin = 10;
-      const imgWidth = 210 - (margin * 2);
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = margin;
-
-      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-      heightLeft -= (pageHeight - margin * 2);
-
-      while (heightLeft > 0) {
-        position = (heightLeft - imgHeight) + margin;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-        heightLeft -= (pageHeight - margin * 2);
-      }
-
-      pdf.save(`bill-${bill.customer_name}-${bill.event_date}.pdf`);
-      toast.success(t('PDF downloaded!', 'PDF डाऊनलोड झाले!'));
-    } catch (e) {
-      console.error("PDF generation error:", e);
-      toast.error(t('Error generating PDF', 'PDF तयार करताना एरर'));
     }
+
+    bill.services.forEach(s => {
+      tableItems.push([language === 'en' ? s.name : s.name_mr, s.quantity, `Rs. ${s.price.toLocaleString()}`, `Rs. ${(s.price * s.quantity).toLocaleString()}`]);
+    });
+
+    if (bill.thali_price_per_plate > 0) {
+      tableItems.push([`Thali Package (${bill.thali_total_plates} Plates)`, bill.thali_total_plates, `Rs. ${bill.thali_price_per_plate}`, `Rs. ${(bill.thali_price_per_plate * bill.thali_total_plates).toLocaleString()}`]);
+    }
+
+    doc.autoTable({
+      startY: finalY,
+      head: [['Description / तपशील', 'Qty / प्रमाण', 'Rate / दर', 'Amount / रक्कम']],
+      body: tableItems,
+      headStyles: { fillColor: [128, 0, 0] },
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      styles: { fontSize: 9 }
+    });
+
+    finalY = doc.lastAutoTable.finalY + 10;
+
+    // --- Financial Summary ---
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    if (bill.discount > 0) {
+      doc.text(`Discount / सूट: -Rs. ${bill.discount.toLocaleString()}`, 200 - margin, finalY, { align: 'right' });
+      finalY += 6;
+    }
+    doc.setFontSize(11);
+    doc.text(`TOTAL AMOUNT / एकूण रक्कम: Rs. ${bill.total_amount.toLocaleString()}`, 200 - margin, finalY, { align: 'right' });
+    
+    finalY += 8;
+    const balanceDue = bill.total_amount - (bill.pre_booking_amount || 0) - (bill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
+    doc.setTextColor(128, 0, 0);
+    doc.setFontSize(14);
+    doc.text(`BALANCE DUE / उर्वरित रक्कम: Rs. ${balanceDue.toLocaleString()}`, 200 - margin, finalY, { align: 'right' });
+
+    // --- Deposits History Table ---
+    if (bill.deposits && bill.deposits.length > 0) {
+      finalY += 15;
+      // Check for page break
+      if (finalY > 250) { doc.addPage(); finalY = 20; }
+      
+      doc.setTextColor(128, 0, 0);
+      doc.setFontSize(12);
+      doc.text('Deposits History / भरलेली रक्कम', margin, finalY);
+      
+      const depData = bill.deposits.map(d => [
+        new Date(d.timestamp).toLocaleDateString(),
+        d.paymentMode === 'cash' ? 'Cash / रोख' : 'Online / ऑनलाईन',
+        d.description || '-',
+        `Rs. ${d.amount.toLocaleString()}`
+      ]);
+
+      doc.autoTable({
+        startY: finalY + 5,
+        head: [['Date / तारीख', 'Mode / पद्धत', 'Description / वर्णन', 'Amount / रक्कम']],
+        body: depData,
+        headStyles: { fillColor: [80, 80, 80] },
+        margin: { left: margin, right: margin },
+        theme: 'striped',
+        styles: { fontSize: 8 }
+      });
+    }
+
+    doc.save(`bill-${bill.customer_name}-${bill.event_date}.pdf`);
+    toast.success(t('PDF downloaded!', 'PDF डाऊनलोड झाले!'));
   };
 
   const handleShareBill = async (bill) => {
