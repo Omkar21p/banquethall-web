@@ -25,7 +25,8 @@ const OlderBookings = () => {
   const [newDeposit, setNewDeposit] = useState({
     amount: '',
     paymentMode: 'cash',
-    description: ''
+    description: '',
+    timestamp: new Date().toISOString().split('T')[0]
   });
 
   useEffect(() => {
@@ -678,6 +679,15 @@ const OlderBookings = () => {
                           className="w-full px-3 py-2 border rounded-lg"
                         />
                       </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">{t('Date', 'तारीख')}</label>
+                        <input
+                          type="date"
+                          value={newDeposit.timestamp}
+                          onChange={(e) => setNewDeposit({ ...newDeposit, timestamp: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-lg text-xs"
+                        />
+                      </div>
                       <button
                         onClick={async () => {
                           if (!newDeposit.amount || parseFloat(newDeposit.amount) <= 0) {
@@ -691,7 +701,7 @@ const OlderBookings = () => {
                           const deposit = {
                             ...newDeposit,
                             amount: parseFloat(newDeposit.amount),
-                            timestamp: new Date().toISOString()
+                            timestamp: new Date(newDeposit.timestamp).toISOString()
                           };
                           const updatedBill = {
                             ...selectedBill,
@@ -703,12 +713,12 @@ const OlderBookings = () => {
                             toast.success(t('Added!', 'जोडले!'));
                             setSelectedBill(updatedBill);
                             fetchBills();
-                            setNewDeposit({ amount: '', paymentMode: 'cash', description: '' });
+                            setNewDeposit({ amount: '', paymentMode: 'cash', description: '', timestamp: new Date().toISOString().split('T')[0] });
                           } catch (err) {
                             toast.error(t('Error', 'त्रुटी'));
                           }
                         }}
-                        className="px-4 py-2 bg-[#D4AF37] text-white rounded-lg hover:bg-[#B8941F]"
+                        className="px-4 py-2 bg-[#D4AF37] text-white rounded-lg hover:bg-[#B8941F] mb-0.5"
                       >
                         {t('Add', 'जोडा')}
                       </button>
