@@ -499,7 +499,7 @@ const OlderBookings = () => {
                   </div>
                 </div>
 
-                <table className="w-full text-sm mb-4 border-collapse">
+                <table className="w-full text-[9px] mb-4 border-collapse">
                   <thead>
                     <tr className="bg-[#800000] text-white">
                       <th className="border p-2 text-left">{t('Description', 'वर्णन')}</th>
@@ -510,17 +510,17 @@ const OlderBookings = () => {
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="border p-2">{t('Hall Rent', 'हॉल भाडे')}</td>
-                      <td className="border p-2 text-right">1</td>
-                      <td className="border p-2 text-right">₹{Number(selectedBill.hall_rent || 0).toLocaleString()}</td>
-                      <td className="border p-2 text-right">₹{Number(selectedBill.hall_rent || 0).toLocaleString()}</td>
+                      <td className="border p-1">{t('Hall Rent', 'हॉल भाडे')}</td>
+                      <td className="border p-1 text-right">1</td>
+                      <td className="border p-1 text-right">₹{Number(selectedBill.hall_rent || 0).toLocaleString()}</td>
+                      <td className="border p-1 text-right">₹{Number(selectedBill.hall_rent || 0).toLocaleString()}</td>
                     </tr>
                     {selectedBill.custom_charges && selectedBill.custom_charges.length > 0 && selectedBill.custom_charges.map((charge, idx) => (
                       <tr key={`charge-${idx}`}>
-                        <td className="border p-2">{language === 'en' ? charge.label : charge.label_mr} {charge.isImported && <span className="text-[8px] bg-blue-100 text-blue-700 px-1 rounded ml-1 font-bold">EVENT MGMT</span>}</td>
-                        <td className="border p-2 text-right">1</td>
-                        <td className="border p-2 text-right">₹{Number(charge.amount || 0).toLocaleString()}</td>
-                        <td className="border p-2 text-right">₹{Number(charge.amount || 0).toLocaleString()}</td>
+                        <td className="border p-1">{language === 'en' ? charge.label : charge.label_mr} {charge.isImported && <span className="text-[8px] bg-blue-100 text-blue-700 px-1 rounded ml-1 font-bold">EVENT MGMT</span>}</td>
+                        <td className="border p-1 text-right">1</td>
+                        <td className="border p-1 text-right">₹{Number(charge.amount || 0).toLocaleString()}</td>
+                        <td className="border p-1 text-right">₹{Number(charge.amount || 0).toLocaleString()}</td>
                       </tr>
                     ))}
                     
@@ -528,14 +528,14 @@ const OlderBookings = () => {
                     {selectedBill.services.filter(s => !s.isImported).length > 0 && (
                       <>
                         <tr className="bg-gray-50/50">
-                          <td colSpan={4} className="border p-2 font-semibold text-xs text-gray-500 uppercase tracking-wider">{t('Other Services', 'इतर सेवा')}</td>
+                          <td colSpan={4} className="border p-1 font-semibold text-[8px] text-gray-500 uppercase tracking-wider">{t('Other Services', 'इतर सेवा')}</td>
                         </tr>
                         {selectedBill.services.filter(s => !s.isImported).map((service, idx) => (
                           <tr key={`reg-${idx}`}>
-                            <td className="border p-2">{language === 'en' ? service.name : service.name_mr}</td>
-                            <td className="border p-2 text-right">{service.quantity}</td>
-                            <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
-                            <td className="border p-2 text-right">₹{(service.price * service.quantity).toLocaleString()}</td>
+                            <td className="border p-1">{language === 'en' ? service.name : service.name_mr}</td>
+                            <td className="border p-1 text-right">{service.quantity}</td>
+                            <td className="border p-1 text-right">₹{Number(service.price || 0).toLocaleString()}</td>
+                            <td className="border p-1 text-right">₹{Number(service.price * service.quantity || 0).toLocaleString()}</td>
                           </tr>
                         ))}
                       </>
@@ -545,14 +545,14 @@ const OlderBookings = () => {
                     {selectedBill.services.filter(s => s.isImported).length > 0 && (
                       <>
                         <tr className="bg-blue-50/30">
-                          <td colSpan={4} className="border p-2 font-semibold text-xs text-blue-600 uppercase tracking-wider">{t('Event Management Services', 'इव्हेंट मॅनेजमेंट सेवा')}</td>
+                          <td colSpan={4} className="border p-1 font-semibold text-[8px] text-blue-600 uppercase tracking-wider">{t('Event Management Services', 'इव्हेंट मॅनेजमेंट सेवा')}</td>
                         </tr>
                         {selectedBill.services.filter(s => s.isImported).map((service, idx) => (
                           <tr key={`imp-${idx}`}>
-                            <td className="border p-2">{language === 'en' ? service.name : service.name_mr}</td>
-                            <td className="border p-2 text-right">{service.quantity}</td>
-                            <td className="border p-2 text-right">₹{service.price.toLocaleString()}</td>
-                            <td className="border p-2 text-right">₹{(service.price * service.quantity).toLocaleString()}</td>
+                            <td className="border p-1">{language === 'en' ? service.name : service.name_mr}</td>
+                            <td className="border p-1 text-right">{service.quantity}</td>
+                            <td className="border p-1 text-right">₹{Number(service.price || 0).toLocaleString()}</td>
+                            <td className="border p-1 text-right">₹{Number(service.price * service.quantity || 0).toLocaleString()}</td>
                           </tr>
                         ))}
                       </>
@@ -561,23 +561,23 @@ const OlderBookings = () => {
                     {((parseInt(selectedBill.thali_price_per_plate) > 0 && parseInt(selectedBill.thali_total_plates) > 0) || (selectedBill.thali_items && selectedBill.thali_items.length > 0)) && (
                       <>
                         <tr className="bg-gray-50">
-                          <td className="border p-2 font-bold" colSpan={4}>
+                          <td className="border p-1 font-bold" colSpan={4}>
                             {t('Thali Package', 'थाळी पॅकेज')}
                           </td>
                         </tr>
                         <tr>
-                          <td className="border p-2 pl-4">
+                          <td className="border p-1 pl-4">
                             {t('Price per plate', 'किंमत प्रति ताट')}
                             {selectedBill.thali_items && selectedBill.thali_items.length > 0 && (
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-[8px] text-gray-500 mt-1">
                                 {t('Includes: ', 'समाविष्ट: ')}
                                 {selectedBill.thali_items.map(item => (language === 'en' ? item.name : (item.name_mr || item.name))).join(', ')}
                               </div>
                             )}
                           </td>
-                          <td className="border p-2 text-right">{selectedBill.thali_total_plates || '-'}</td>
-                          <td className="border p-2 text-right">₹{(parseInt(selectedBill.thali_price_per_plate) || 0).toLocaleString()}</td>
-                          <td className="border p-2 text-right">₹{((parseInt(selectedBill.thali_price_per_plate) || 0) * (parseInt(selectedBill.thali_total_plates) || 0)).toLocaleString()}</td>
+                          <td className="border p-1 text-right">{selectedBill.thali_total_plates || '-'}</td>
+                          <td className="border p-1 text-right">₹{Number(selectedBill.thali_price_per_plate || 0).toLocaleString()}</td>
+                          <td className="border p-1 text-right">₹{Number((selectedBill.thali_price_per_plate || 0) * (selectedBill.thali_total_plates || 0)).toLocaleString()}</td>
                         </tr>
                       </>
                     )}
@@ -682,26 +682,26 @@ const OlderBookings = () => {
                     </div>
                   )}
 
-                  <table className="w-full text-xs border-collapse">
+                  <table className="w-full text-[9px] border-collapse">
                     <thead>
                       <tr className="bg-gray-100">
-                        <th className="border p-2 text-left">{t('Date', 'तारीख')}</th>
-                        <th className="border p-2 text-left">{t('Mode', 'पद्धत')}</th>
-                        <th className="border p-2 text-left">{t('Desc', 'वर्णन')}</th>
-                        <th className="border p-2 text-right">{t('Amount', 'रक्कम')}</th>
-                        {!isExporting && <th className="border p-2 text-center">{t('Act', 'क्रिया')}</th>}
+                        <th className="border p-1 text-left">{t('Date', 'तारीख')}</th>
+                        <th className="border p-1 text-left">{t('Mode', 'पद्धत')}</th>
+                        <th className="border p-1 text-left">{t('Desc', 'वर्णन')}</th>
+                        <th className="border p-1 text-right">{t('Amount', 'रक्कम')}</th>
+                        {!isExporting && <th className="border p-1 text-center">{t('Act', 'क्रिया')}</th>}
                       </tr>
                     </thead>
                     <tbody>
                       {selectedBill.deposits?.length > 0 ? (
                         selectedBill.deposits.map((dep, midx) => (
                           <tr key={midx}>
-                            <td className="border p-2">{new Date(dep.timestamp).toLocaleDateString()}</td>
-                            <td className="border p-2">{t(dep.paymentMode, dep.paymentMode === 'cash' ? 'रोख' : 'ऑनलाईन')}</td>
-                            <td className="border p-2">{dep.description || '-'}</td>
-                            <td className="border p-2 text-right font-bold">₹{dep.amount.toLocaleString()}</td>
+                            <td className="border p-1">{new Date(dep.timestamp).toLocaleDateString()}</td>
+                            <td className="border p-1">{t(dep.paymentMode, dep.paymentMode === 'cash' ? 'रोख' : 'ऑनलाईन')}</td>
+                            <td className="border p-1">{dep.description || '-'}</td>
+                            <td className="border p-1 text-right font-bold">₹{dep.amount.toLocaleString()}</td>
                             {!isExporting && (
-                              <td className="border p-2 text-center text-red-500 cursor-pointer" onClick={async () => {
+                              <td className="border p-1 text-center text-red-500 cursor-pointer" onClick={async () => {
                                 if (window.confirm(t('Are you sure?', 'तुम्हाला खात्री आहे?'))) {
                                   const newDeposits = selectedBill.deposits.filter((_, i) => i !== midx);
                                   const depositsSum = newDeposits.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
@@ -729,9 +729,9 @@ const OlderBookings = () => {
                     </tbody>
                     <tfoot>
                       <tr className="bg-gray-50 font-bold">
-                        <td colSpan={4} className="border p-2 text-right">{t('Total Paid:', 'एकूण भरलेले:')}</td>
-                        <td className="border p-2 text-right">₹{(selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0).toLocaleString()}</td>
-                        {!isExporting && <td className="border p-2"></td>}
+                        <td colSpan={3} className="border p-1 text-right">{t('Total Paid:', 'एकूण भरलेले:')}</td>
+                        <td className="border p-1 text-right">₹{(selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0).toLocaleString()}</td>
+                        {!isExporting && <td className="border p-1"></td>}
                       </tr>
                     </tfoot>
                   </table>
