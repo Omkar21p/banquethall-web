@@ -161,7 +161,7 @@ const OlderBookings = () => {
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.deposits-section', '.summary-section'] }
+        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.deposits-section', '.summary-section', '.bill-table'] }
       };
 
       await window.html2pdf().from(element).set(opt).save();
@@ -460,7 +460,7 @@ const OlderBookings = () => {
                     <img src={halls.find(h => h.id === selectedBill.hall_id).logo} alt="Logo" className="h-16 object-contain" />
                   )}
                   <div className="text-left">
-                    <h2 className="playfair text-3xl font-bold maroon-text leading-tight">{selectedBill.hall_name}</h2>
+                    <h2 className="playfair text-2xl font-bold maroon-text leading-tight">{selectedBill.hall_name}</h2>
                     <p className="text-lg text-gray-600 font-medium">{t('Invoice', 'बिल')}</p>
                   </div>
                 </div>
@@ -499,7 +499,7 @@ const OlderBookings = () => {
                   </div>
                 </div>
 
-                <table className="w-full text-xs mb-4 border-collapse">
+                <table className="w-full text-[10px] mb-4 border-collapse bill-table">
                   <thead>
                     <tr className="bg-[#800000] text-white">
                       <th className="border p-2 text-left">{t('Description', 'वर्णन')}</th>
@@ -589,7 +589,7 @@ const OlderBookings = () => {
                         <td className="border p-1 text-right">-₹{Number(selectedBill.discount || 0).toLocaleString()}</td>
                       </tr>
                     )}
-                    <tr className="font-bold text-lg bg-gray-50">
+                    <tr className="font-bold text-base bg-gray-50">
                       <td colSpan={3} className="border p-1 text-right">{t('Total:', 'कुल:')}</td>
                       <td className="border p-1 text-right">₹{Number(selectedBill.total_amount || 0).toLocaleString()}</td>
                     </tr>
@@ -599,7 +599,7 @@ const OlderBookings = () => {
                         <td className="border p-1 text-right">₹{Number(selectedBill.pre_booking_amount || 0).toLocaleString()}</td>
                       </tr>
                     )}
-                    <tr className="font-bold text-xl maroon-text bg-red-50/30">
+                    <tr className="font-bold text-lg maroon-text bg-red-50/30">
                       <td colSpan={3} className="border p-1 text-right">{t('Balance Due:', 'उर्वरित रक्कम:')}</td>
                       <td className="border p-1 text-right">₹{Number((selectedBill.total_amount || 0) - (selectedBill.pre_booking_amount || 0) - (selectedBill.deposits || []).reduce((s, d) => s + (parseFloat(d.amount) || 0), 0)).toLocaleString()}</td>
                     </tr>
@@ -691,7 +691,7 @@ const OlderBookings = () => {
                     </div>
                   )}
 
-                  <table className="w-full text-xs border-collapse">
+                  <table className="w-full text-[10px] border-collapse margin-top-4">
                     <thead>
                       <tr className="bg-gray-100">
                         <th className="border p-1 text-left">{t('Date', 'तारीख')}</th>

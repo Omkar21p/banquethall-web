@@ -429,7 +429,7 @@ const BillGeneration = () => {
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.deposits-section', '.summary-section'] }
+        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.deposits-section', '.summary-section', '.bill-table'] }
       };
 
       await window.html2pdf().from(element).set(opt).save();
@@ -468,7 +468,7 @@ const BillGeneration = () => {
               <img src={selectedHallData.logo} alt="Hall Logo" className="h-20 object-contain" />
             )}
             <div className={selectedHallData?.logo ? "text-left" : "text-center"}>
-              <h1 className="playfair text-3xl font-bold maroon-text leading-tight">{billData.hall_name}</h1>
+              <h1 className="playfair text-2xl font-bold maroon-text leading-tight">{billData.hall_name}</h1>
               <p className="text-lg text-gray-600 font-medium">{t_bill('Invoice', 'बिल')}</p>
             </div>
           </div>
@@ -507,7 +507,7 @@ const BillGeneration = () => {
             </div>
           </div>
 
-          <table className="w-full text-xs mb-4 border-collapse">
+          <table className="w-full text-[10px] mb-4 border-collapse bill-table">
             <thead>
               <tr className="bg-[#800000] text-white">
                 <th className="border p-1 text-left">{t_bill('Description', 'वर्णन')}</th>
@@ -602,7 +602,7 @@ const BillGeneration = () => {
                   <td className="border p-1 text-right">-₹{Number(billData.discount).toLocaleString()}</td>
                 </tr>
               )}
-              <tr className="font-bold text-lg bg-gray-50">
+              <tr className="font-bold text-base bg-gray-50">
                 <td colSpan={3} className="border p-1 text-right">{t_bill('Total Amount:', 'कुल रक्कम:')}</td>
                 <td className="border p-1 text-right">₹{Number(billData.total_amount || 0).toLocaleString()}</td>
               </tr>
@@ -612,7 +612,7 @@ const BillGeneration = () => {
                   <td className="border p-1 text-right">₹{Number(billData.pre_booking_amount).toLocaleString()}</td>
                 </tr>
               )}
-              <tr className="font-bold text-xl maroon-text bg-red-50/30">
+              <tr className="font-bold text-lg maroon-text bg-red-50/30">
                 <td colSpan={3} className="border p-1 text-right">{t_bill('Balance Due:', 'उर्वरित रक्कम:')}</td>
                 <td className="border p-1 text-right">₹{Number(billData.balance_due || 0).toLocaleString()}</td>
               </tr>
@@ -623,7 +623,7 @@ const BillGeneration = () => {
           {(billData.deposits?.length > 0) && (
             <div className="mt-8 border-t pt-6 deposits-section summary-section">
               <h3 className="playfair text-xl font-bold maroon-text mb-4">{t_bill('Deposits History', 'ठेवींचा इतिहास')}</h3>
-              <table className="w-full text-xs border-collapse">
+              <table className="w-full text-[10px] border-collapse margin-top-4">
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="border p-1 text-left">{t_bill('Date', 'तारीख')}</th>
