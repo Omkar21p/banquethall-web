@@ -429,7 +429,7 @@ const BillGeneration = () => {
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.deposits-section', '.summary-section', '.bill-table'] }
+        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.summary-section'] }
       };
 
       await window.html2pdf().from(element).set(opt).save();
@@ -458,11 +458,19 @@ const BillGeneration = () => {
     return (
       <>
         <div ref={billPreviewRef} className="bg-white p-8 rounded-xl shadow-lg relative" data-testid="bill-preview">
-        {/* CSS to hide elements in PDF */}
+        {/* CSS for PDF output and multi-page borders */}
         <style>{`
+          .pdf-border-container {
+            border: 4px solid #800000 !important;
+            padding: 24px;
+            background-color: #ffffff;
+            /* Force borders on every page */
+            -webkit-box-decoration-break: clone;
+            box-decoration-break: clone;
+          }
           .exporting-pdf .no-print { display: none !important; }
         `}</style>
-        <div className="border-4 border-[#800000] p-6">
+        <div className="pdf-border-container">
           <div className="flex items-center justify-center gap-6 mb-6">
             {selectedHallData?.logo && (
               <img src={selectedHallData.logo} alt="Hall Logo" className="h-20 object-contain" />

@@ -161,7 +161,7 @@ const OlderBookings = () => {
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.deposits-section', '.summary-section', '.bill-table'] }
+        pagebreak:    { mode: ['css', 'legacy'], avoid: ['tr', '.karyalay-package', '.summary-section'] }
       };
 
       await window.html2pdf().from(element).set(opt).save();
@@ -451,10 +451,19 @@ const OlderBookings = () => {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedBill(null)}>
             <div className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="bill-details-modal">
               {/* Add CSS for hiding elements in PDF */}
+              {/* CSS for PDF output and multi-page borders */}
               <style>{`
+                .pdf-border-container {
+                  border: 4px solid #800000 !important;
+                  padding: 24px;
+                  background-color: #ffffff;
+                  /* Force borders on every page */
+                  -webkit-box-decoration-break: clone;
+                  box-decoration-break: clone;
+                }
                 .exporting-pdf .no-print { display: none !important; }
               `}</style>
-              <div ref={billPreviewRef} className="border-4 border-[#800000] p-6 bg-white">
+              <div ref={billPreviewRef} className="pdf-border-container">
                 <div className="flex items-center justify-center gap-6 mb-6">
                   {halls.find(h => h.id === selectedBill.hall_id)?.logo && (
                     <img src={halls.find(h => h.id === selectedBill.hall_id).logo} alt="Logo" className="h-16 object-contain" />
