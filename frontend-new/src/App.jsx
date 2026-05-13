@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from './components/ui/sonner';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import LandingPage from './pages/LandingPage';
 import HallDashboardPage from './pages/HallDashboardPage';
@@ -30,6 +31,7 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/hall/:hallId" element={<HallDashboardPage />} />
             <Route path="/services/:hallId" element={<ServicesPage />} />
@@ -38,18 +40,81 @@ function App() {
             <Route path="/booking" element={<DateBookingPage />} />
             <Route path="/booking/:hallId" element={<DateBookingPage />} />
 
+            {/* Admin login - no protection needed */}
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/halls" element={<HallSettings />} />
-            <Route path="/admin/services" element={<AdminServices />} />
-            <Route path="/admin/packages" element={<AdminPackages />} />
-            <Route path="/admin/calendar" element={<AdminCalendar />} />
-            <Route path="/admin/bills/new" element={<BillGeneration />} />
-            <Route path="/admin/bills/edit/:billId" element={<BillGeneration />} />
-            <Route path="/admin/bills" element={<OlderBookings />} />
-            <Route path="/admin/events" element={<EventManager />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
+
+            {/* Dashboard - all roles */}
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'booking_staff']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+
+            {/* Calendar - all roles (booking_staff primary function) */}
+            <Route path="/admin/calendar" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'booking_staff']}>
+                <AdminCalendar />
+              </ProtectedRoute>
+            } />
+
+            {/* Hall Settings - super_admin and admin only */}
+            <Route path="/admin/halls" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                <HallSettings />
+              </ProtectedRoute>
+            } />
+
+            {/* Services - super_admin and admin only */}
+            <Route path="/admin/services" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                <AdminServices />
+              </ProtectedRoute>
+            } />
+
+            {/* Packages - super_admin and admin only */}
+            <Route path="/admin/packages" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                <AdminPackages />
+              </ProtectedRoute>
+            } />
+
+            {/* Bills - super_admin and admin only */}
+            <Route path="/admin/bills/new" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                <BillGeneration />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/bills/edit/:billId" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                <BillGeneration />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/bills" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                <OlderBookings />
+              </ProtectedRoute>
+            } />
+
+            {/* Event Management - super_admin and admin only */}
+            <Route path="/admin/events" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                <EventManager />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin User Management - super_admin ONLY */}
+            <Route path="/admin/users" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AdminUsers />
+              </ProtectedRoute>
+            } />
+
+            {/* Settings - super_admin and admin only */}
+            <Route path="/admin/settings" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                <AdminSettings />
+              </ProtectedRoute>
+            } />
           </Routes>
           <Toaster position="top-right" />
         </BrowserRouter>

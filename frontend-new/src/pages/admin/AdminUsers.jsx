@@ -12,15 +12,9 @@ const API = `${BACKEND_URL}/api`;
 
 const AdminUsers = () => {
   const { getAuthHeaders, admin } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (admin && admin.role !== 'super_admin') {
-      toast.error('Access denied');
-      navigate('/admin/dashboard');
-    }
-  }, [admin, navigate]);
   const [admins, setAdmins] = useState([]);
   const [halls, setHalls] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
