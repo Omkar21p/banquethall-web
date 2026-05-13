@@ -22,7 +22,28 @@ const AdminLogin = () => {
 
     if (result.success) {
       toast.success(t('Login successful!', 'लॉगिन यशस्वी!'));
-      navigate('/admin/dashboard');
+      
+      // Determine the first allowed page based on permissions
+      const perms = result.admin?.permissions || [];
+      const role = result.admin?.role;
+      let redirectUrl = '/admin/dashboard'; // default
+      
+      if (role === 'super_admin' || perms.includes('*') || perms.includes('dashboard')) {
+        redirectUrl = role === 'super_admin' ? '/admin/super' : '/admin/dashboard';
+      } else if (perms.includes('calendar')) {
+        redirectUrl = '/admin/calendar';
+      } else if (perms.includes('records')) {
+        redirectUrl = '/admin/bills';
+      } else if (perms.includes('events')) {
+        redirectUrl = '/admin/events';
+      } else if (perms.includes('services')) {
+        redirectUrl = '/admin/services';
+      } else if (perms.length > 0) {
+        // Fallback if they have other random permissions
+        redirectUrl = `/admin/${perms[0]}`; 
+      }
+      
+      navigate(redirectUrl);
     } else {
       toast.error(result.error);
     }

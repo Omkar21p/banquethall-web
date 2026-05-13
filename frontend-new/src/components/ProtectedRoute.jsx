@@ -26,9 +26,20 @@ const ProtectedRoute = ({ children, allowedRoles, requiredPermission }) => {
   const perms = admin.permissions || [];
   const hasAllPerms = perms.includes('*');
 
+  // Determine fallback URL
+  const getFallbackUrl = () => {
+    if (admin.role === 'super_admin') return '/admin/super';
+    if (perms.includes('*') || perms.includes('dashboard')) return '/admin/dashboard';
+    if (perms.includes('calendar')) return '/admin/calendar';
+    if (perms.includes('records')) return '/admin/bills';
+    if (perms.includes('events')) return '/admin/events';
+    if (perms.length > 0) return `/admin/${perms[0]}`;
+    return '/admin/login'; // No permissions at all
+  };
+
   if (requiredPermission) {
     if (!hasAllPerms && !perms.includes(requiredPermission)) {
-      return <Navigate to="/admin/dashboard" replace />;
+      return <Navigate to={getFallbackUrl()} replace />;
     }
   }
 
@@ -36,7 +47,7 @@ const ProtectedRoute = ({ children, allowedRoles, requiredPermission }) => {
   if (allowedRoles) {
     const role = admin.role || 'admin';
     if (!allowedRoles.includes(role)) {
-      return <Navigate to="/admin/dashboard" replace />;
+      return <Navigate to={getFallbackUrl()} replace />;
     }
   }
 
