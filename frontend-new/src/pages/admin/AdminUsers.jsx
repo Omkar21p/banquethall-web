@@ -10,15 +10,25 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const AdminUsers = () => {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, admin } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (admin && admin.role !== 'super_admin') {
+      toast.error('Access denied');
+      navigate('/admin/dashboard');
+    }
+  }, [admin, navigate]);
   const [admins, setAdmins] = useState([]);
   const [halls, setHalls] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    hall_id: ''
+    hall_id: '',
+    role: 'admin',
+    permissions: []
   });
 
   useEffect(() => {
@@ -54,7 +64,7 @@ const AdminUsers = () => {
         hall_id: formData.hall_id
       }, getAuthHeaders());
       toast.success(t('Admin added successfully!', 'प्रशासक यशस्वीपणे जोडला!'));
-      setFormData({ username: '', password: '', hall_id: '' });
+      setFormData({ username: '', password: '', hall_id: '', role: 'admin', permissions: [] });
       setShowAddForm(false);
       fetchAdmins();
     } catch (error) {
@@ -139,6 +149,19 @@ const AdminUsers = () => {
                   ))}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">{t('Role', 'भूमिका')}</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  required
+                >
+                  <option value="admin">Hall Admin</option>
+                  <option value="super_admin">Super Admin</option>
+                  <option value="booking_staff">Booking Staff (Calendar Only)</option>
+                </select>
+              </div>
               <button
                 type="submit"
                 className="flex items-center gap-2 px-6 py-2 bg-[#800000] text-white rounded-full hover:bg-[#600000]"
@@ -157,6 +180,7 @@ const AdminUsers = () => {
               <tr>
                 <th className="px-6 py-3 text-left">{t('Username', 'वापरकर्ता नाव')}</th>
                 <th className="px-6 py-3 text-left">{t('Hall Name', 'हॉल नाव')}</th>
+                <th className="px-6 py-3 text-left">{t('Role', 'भूमिका')}</th>
                 <th className="px-6 py-3 text-left">{t('Created', 'तयार केले')}</th>
                 <th className="px-6 py-3 text-center">{t('Actions', 'कृती')}</th>
               </tr>
@@ -166,6 +190,15 @@ const AdminUsers = () => {
                 <tr key={admin.id} className="border-b hover:bg-gray-50" data-testid={`admin-row-${admin.id}`}>
                   <td className="px-6 py-4 font-semibold">{admin.username}</td>
                   <td className="px-6 py-4">{admin.hall_name}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                      admin.role === 'super_admin' ? 'bg-purple-100 text-purple-700' :
+                      admin.role === 'booking_staff' ? 'bg-blue-100 text-blue-700' :
+                      'bg-green-100 text-green-700'
+                    }`}>
+                      {admin.role}
+                    </span>
+                  </td>
                   <td className="px-6 py-4">{new Date(admin.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-4 text-center">
                     <button

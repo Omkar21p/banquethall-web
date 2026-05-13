@@ -36,8 +36,6 @@ class Admin(BaseModel):
     password_hash: str
     hall_name: str
     hall_id: Optional[str] = None
-    role: str = "admin" # super_admin, admin, booking_staff
-    permissions: List[str] = [] # e.g., ["view_bookings", "create_bookings", "view_bills"]
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class AdminLogin(BaseModel):
@@ -50,8 +48,6 @@ class AdminResponse(BaseModel):
     username: str
     hall_name: str
     hall_id: Optional[str] = None
-    role: str = "admin"
-    permissions: List[str] = []
     created_at: Optional[datetime] = None
 
 class ChangePassword(BaseModel):
@@ -197,9 +193,7 @@ async def login(admin_login: AdminLogin):
             "id": admin["id"],
             "username": admin["username"],
             "hall_name": admin["hall_name"],
-            "hall_id": admin.get("hall_id", ""),
-            "role": admin.get("role", "admin"),
-            "permissions": admin.get("permissions", [])
+            "hall_id": admin.get("hall_id", "")
         }
     }
 
@@ -235,26 +229,10 @@ async def create_admin(admin_data: dict, admin=Depends(get_current_admin)):
         username=admin_data["username"],
         password_hash=hash_password(admin_data["password"]),
         hall_name=hall_name,
-        hall_id=hall_id,
-        role=admin_data.get("role", "admin"),
-        permissions=admin_data.get("permissions", [])
+        hall_id=hall_id
     )
     await db.admins.insert_one(new_admin.model_dump())
     return {"message": "Admin created successfully", "id": new_admin.id}
-
-@api_router.put("/admins/{admin_id}")
-async def update_admin_role(admin_id: str, data: dict, admin=Depends(get_current_admin)):
-    if admin.get("role") != "super_admin":
-        raise HTTPException(status_code=403, detail="Only super admins can manage permissions")
-    
-    await db.admins.update_one(
-        {"id": admin_id},
-        {"$set": {
-            "role": data.get("role"),
-            "permissions": data.get("permissions", [])
-        }}
-    )
-    return {"message": "Admin updated successfully"}
 
 @api_router.delete("/admins/{admin_id}")
 async def delete_admin(admin_id: str, admin=Depends(get_current_admin)):
@@ -278,7 +256,9 @@ async def get_hall(hall_id: str):
 
 @api_router.put("/halls/{hall_id}")
 async def update_hall(hall_id: str, hall: Hall, admin=Depends(get_current_admin)):
-    await db.halls.update_one({"id": hall_id}, {"$set": hall.model_dump()})
+    doc = hall.model_dump()
+    doc['id'] = hall_id
+    await db.halls.update_one({"id": hall_id}, {"$set": doc})
     # Also update hall_name on all admins linked to this hall
     await db.admins.update_many(
         {"hall_id": hall_id},
@@ -299,7 +279,9 @@ async def create_service(service: Service, admin=Depends(get_current_admin)):
 
 @api_router.put("/services/{service_id}")
 async def update_service(service_id: str, service: Service, admin=Depends(get_current_admin)):
-    await db.services.update_one({"id": service_id}, {"$set": service.model_dump()})
+    doc = service.model_dump()
+    doc['id'] = service_id
+    await db.services.update_one({"id": service_id}, {"$set": doc})
     return {"message": "Service updated successfully"}
 
 @api_router.delete("/services/{service_id}")
@@ -320,7 +302,9 @@ async def create_package(package: Package, admin=Depends(get_current_admin)):
 
 @api_router.put("/packages/{package_id}")
 async def update_package(package_id: str, package: Package, admin=Depends(get_current_admin)):
-    await db.packages.update_one({"id": package_id}, {"$set": package.model_dump()})
+    doc = package.model_dump()
+    doc['id'] = package_id
+    await db.packages.update_one({"id": package_id}, {"$set": doc})
     return {"message": "Package updated successfully"}
 
 @api_router.delete("/packages/{package_id}")
@@ -369,6 +353,7 @@ async def create_booking(booking: Booking, admin=Depends(get_current_admin)):
 @api_router.put("/bookings/{booking_id}")
 async def update_booking(booking_id: str, booking: Booking, admin=Depends(get_current_admin)):
     doc = booking.model_dump()
+    doc['id'] = booking_id
     doc['booking_date'] = doc['booking_date'].isoformat()
     await db.bookings.update_one({"id": booking_id}, {"$set": doc})
     return {"message": "Booking updated successfully"}
@@ -397,6 +382,7 @@ async def create_bill(bill: Bill, admin=Depends(get_current_admin)):
 @api_router.put("/bills/{bill_id}")
 async def update_bill(bill_id: str, bill: Bill, admin=Depends(get_current_admin)):
     doc = bill.model_dump()
+    doc['id'] = bill_id
     doc['created_at'] = doc['created_at'].isoformat()
     await db.bills.update_one({"id": bill_id}, {"$set": doc})
     return {"message": "Bill updated successfully"}
@@ -427,6 +413,36 @@ async def reset_system(admin=Depends(get_current_admin)):
     await db.bills.delete_many({})
     return {"message": "System reset successfully"}
 
+@api_router.get("/system-repair-halls")
+async def system_repair_halls():
+    # Emergency fix: Map existing halls back to original admin hall_ids.
+    admins = await db.admins.find({}, {"_id": 0}).to_list(100)
+    halls = await db.halls.find({}, {"_id": 0}).to_list(100)
+    
+    # We will try to map by matching 'om' / 'shiv' in either the admin username OR the admin hall_name!
+    for adm in admins:
+        h_id = adm.get("hall_id")
+        h_name = adm.get("hall_name", "").lower()
+        if not h_id:
+            continue
+            
+        is_om = "om" in adm["username"].lower() or "om" in h_name
+        is_shiv = "shiv" in adm["username"].lower() or "shiv" in h_name
+        
+        target_hall = None
+        if is_om:
+            target_hall = next((h for h in halls if "om" in h["name"].lower()), None)
+        elif is_shiv:
+            target_hall = next((h for h in halls if "shiv" in h["name"].lower()), None)
+            
+        if target_hall:
+            await db.halls.update_one(
+                {"name": target_hall["name"]}, 
+                {"$set": {"id": h_id}}
+            )
+            
+    return {"message": "Advanced system data links repaired"}
+
 @api_router.post("/upload-image")
 async def upload_image(file: UploadFile = File(...), admin=Depends(get_current_admin)):
     try:
@@ -437,10 +453,6 @@ async def upload_image(file: UploadFile = File(...), admin=Depends(get_current_a
         return {"image_data": image_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading image: {str(e)}")
-
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}
 
 app.include_router(api_router)
 
@@ -501,12 +513,10 @@ async def startup_event():
             username="om_admin",
             password_hash=hash_password("om123"),
             hall_name=om_hall["name"] if om_hall else "Om Lawns Banquet Hall",
-            hall_id=om_hall["id"] if om_hall else "",
-            role="super_admin",
-            permissions=["*"]
+            hall_id=om_hall["id"] if om_hall else ""
         )
         await db.admins.insert_one(admin1.model_dump())
-        logger.info("Created default super admin: om_admin / om123")
+        logger.info("Created default admin: om_admin / om123")
     
     if not admin2_exists:
         admin2 = Admin(
@@ -543,4 +553,4 @@ async def shutdown_db_client():
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 10000))
-    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)# Force Re-deployment - v1.0.1
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)

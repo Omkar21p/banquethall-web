@@ -33,17 +33,17 @@ const AdminLayout = ({ children }) => {
   }
 
   const menuItems = [
-    { path: '/admin/dashboard', icon: LayoutDashboard, label: t('Dashboard', 'डॅशबोर्ड') },
-    { path: '/admin/halls', icon: Building2, label: t('Hall Settings', 'हॉल सेटिंग्ज') },
-    { path: '/admin/services', icon: Briefcase, label: t('Services', 'सेवा') },
-    { path: '/admin/packages', icon: Package, label: t('Packages', 'पॅकेजेस') },
-    { path: '/admin/calendar', icon: Calendar, label: t('Calendar', 'कॅलेंडर') },
-    { path: '/admin/events', icon: ClipboardList, label: t('Event Management', 'कार्यक्रम व्यवस्थापन') },
-    { path: '/admin/bills/new', icon: FileText, label: t('New Bill', 'नविन बिल') },
-    { path: '/admin/bills', icon: FolderOpen, label: t('Records', 'रेकॉर्ड्स') },
-    { path: '/admin/users', icon: Users, label: t('Manage Admins', 'प्रशासक व्यवस्थापन') },
-    { path: '/admin/settings', icon: Settings, label: t('Settings', 'सेटिंग्ज') },
-  ];
+    { path: '/admin/dashboard', icon: LayoutDashboard, label: t('Dashboard', 'डॅशबोर्ड'), roles: ['super_admin', 'admin', 'booking_staff'] },
+    { path: '/admin/halls', icon: Building2, label: t('Hall Settings', 'हॉल सेटिंग्ज'), roles: ['super_admin', 'admin'] },
+    { path: '/admin/services', icon: Briefcase, label: t('Services', 'सेवा'), roles: ['super_admin', 'admin'] },
+    { path: '/admin/packages', icon: Package, label: t('Packages', 'पॅकेजेस'), roles: ['super_admin', 'admin'] },
+    { path: '/admin/calendar', icon: Calendar, label: t('Calendar', 'कॅलेंडर'), roles: ['super_admin', 'admin', 'booking_staff'] },
+    { path: '/admin/events', icon: ClipboardList, label: t('Event Management', 'कार्यक्रम व्यवस्थापन'), roles: ['super_admin', 'admin'] },
+    { path: '/admin/bills/new', icon: FileText, label: t('New Bill', 'नविन बिल'), roles: ['super_admin', 'admin'] },
+    { path: '/admin/bills', icon: FolderOpen, label: t('Records', 'रेकॉर्ड्स'), roles: ['super_admin', 'admin'] },
+    { path: '/admin/users', icon: Users, label: t('Manage Admins', 'प्रशासक व्यवस्थापन'), roles: ['super_admin'] },
+    { path: '/admin/settings', icon: Settings, label: t('Settings', 'सेटिंग्ज'), roles: ['super_admin', 'admin'] },
+  ].filter(item => item.roles.includes(admin.role || 'admin'));
 
   const handleLogout = () => {
     logout();
