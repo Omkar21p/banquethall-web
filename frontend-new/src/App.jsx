@@ -44,84 +44,60 @@ function App() {
             {/* Admin login - no protection needed */}
             <Route path="/admin/login" element={<AdminLogin />} />
 
-            {/* Dashboard - all roles */}
+            {/* Dashboard */}
             <Route path="/admin/dashboard" element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'booking_staff']}>
-                <AdminDashboard />
-              </ProtectedRoute>
+              <ProtectedRoute requiredPermission="dashboard"><AdminDashboard /></ProtectedRoute>
             } />
 
             {/* Super Admin Control Panel */}
             <Route path="/admin/super" element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
-                <SuperAdminDashboard />
-              </ProtectedRoute>
+              <ProtectedRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></ProtectedRoute>
             } />
 
-            {/* Calendar - all roles (booking_staff primary function) */}
+            {/* Calendar */}
             <Route path="/admin/calendar" element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'booking_staff']}>
-                <AdminCalendar />
-              </ProtectedRoute>
+              <ProtectedRoute requiredPermission="calendar"><AdminCalendar /></ProtectedRoute>
             } />
 
-            {/* Hall Settings - super_admin and admin only */}
+            {/* Hall Settings */}
             <Route path="/admin/halls" element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
-                <HallSettings />
-              </ProtectedRoute>
+              <ProtectedRoute requiredPermission="hall_settings"><HallSettings /></ProtectedRoute>
             } />
 
-            {/* Services - super_admin and admin only */}
+            {/* Services */}
             <Route path="/admin/services" element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
-                <AdminServices />
-              </ProtectedRoute>
+              <ProtectedRoute requiredPermission="services"><AdminServices /></ProtectedRoute>
             } />
 
-            {/* Packages - super_admin and admin only */}
+            {/* Packages */}
             <Route path="/admin/packages" element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
-                <AdminPackages />
-              </ProtectedRoute>
+              <ProtectedRoute requiredPermission="packages"><AdminPackages /></ProtectedRoute>
             } />
 
-            {/* Bills - super_admin and admin only */}
+            {/* Bills */}
             <Route path="/admin/bills/new" element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
-                <BillGeneration />
-              </ProtectedRoute>
+              <ProtectedRoute requiredPermission="bills"><BillGeneration /></ProtectedRoute>
             } />
             <Route path="/admin/bills/edit/:billId" element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
-                <BillGeneration />
-              </ProtectedRoute>
+              <ProtectedRoute requiredPermission="bills"><BillGeneration /></ProtectedRoute>
             } />
             <Route path="/admin/bills" element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
-                <OlderBookings />
-              </ProtectedRoute>
+              <ProtectedRoute requiredPermission="records"><OlderBookings /></ProtectedRoute>
             } />
 
-            {/* Event Management - super_admin and admin only */}
+            {/* Event Management */}
             <Route path="/admin/events" element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
-                <EventManager />
-              </ProtectedRoute>
+              <ProtectedRoute requiredPermission="events"><EventManager /></ProtectedRoute>
             } />
 
-            {/* Admin User Management - super_admin ONLY */}
+            {/* Admin User Management - legacy route */}
             <Route path="/admin/users" element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
-                <AdminUsers />
-              </ProtectedRoute>
+              <ProtectedRoute allowedRoles={['super_admin']}><AdminUsers /></ProtectedRoute>
             } />
 
-            {/* Settings - super_admin and admin only */}
+            {/* Settings */}
             <Route path="/admin/settings" element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
-                <AdminSettings />
-              </ProtectedRoute>
+              <ProtectedRoute requiredPermission="settings"><AdminSettings /></ProtectedRoute>
             } />
           </Routes>
           <Toaster position="top-right" />

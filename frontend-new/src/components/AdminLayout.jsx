@@ -32,18 +32,21 @@ const AdminLayout = ({ children }) => {
     return null;
   }
 
+  const perms = admin.permissions || [];
+  const hasPermission = (key) => admin.role === 'super_admin' || perms.includes('*') || perms.includes(key);
+
   const menuItems = [
-    { path: '/admin/dashboard', icon: LayoutDashboard, label: t('Dashboard', 'डॅशबोर्ड'), roles: ['super_admin', 'admin', 'booking_staff'] },
-    { path: '/admin/halls', icon: Building2, label: t('Hall Settings', 'हॉल सेटिंग्ज'), roles: ['super_admin', 'admin'] },
-    { path: '/admin/services', icon: Briefcase, label: t('Services', 'सेवा'), roles: ['super_admin', 'admin'] },
-    { path: '/admin/packages', icon: Package, label: t('Packages', 'पॅकेजेस'), roles: ['super_admin', 'admin'] },
-    { path: '/admin/calendar', icon: Calendar, label: t('Calendar', 'कॅलेंडर'), roles: ['super_admin', 'admin', 'booking_staff'] },
-    { path: '/admin/events', icon: ClipboardList, label: t('Event Management', 'कार्यक्रम व्यवस्थापन'), roles: ['super_admin', 'admin'] },
-    { path: '/admin/bills/new', icon: FileText, label: t('New Bill', 'नविन बिल'), roles: ['super_admin', 'admin'] },
-    { path: '/admin/bills', icon: FolderOpen, label: t('Records', 'रेकॉर्ड्स'), roles: ['super_admin', 'admin'] },
-    { path: '/admin/super', icon: Users, label: t('Control Panel', 'नियंत्रण पॅनेल'), roles: ['super_admin'] },
-    { path: '/admin/settings', icon: Settings, label: t('Settings', 'सेटिंग्ज'), roles: ['super_admin', 'admin'] },
-  ].filter(item => item.roles.includes(admin.role || 'admin'));
+    { path: '/admin/dashboard', icon: LayoutDashboard, label: t('Dashboard', 'डॅशबोर्ड'), permission: 'dashboard' },
+    { path: '/admin/halls', icon: Building2, label: t('Hall Settings', 'हॉल सेटिंग्ज'), permission: 'hall_settings' },
+    { path: '/admin/services', icon: Briefcase, label: t('Services', 'सेवा'), permission: 'services' },
+    { path: '/admin/packages', icon: Package, label: t('Packages', 'पॅकेजेस'), permission: 'packages' },
+    { path: '/admin/calendar', icon: Calendar, label: t('Calendar', 'कॅलेंडर'), permission: 'calendar' },
+    { path: '/admin/events', icon: ClipboardList, label: t('Event Management', 'कार्यक्रम व्यवस्थापन'), permission: 'events' },
+    { path: '/admin/bills/new', icon: FileText, label: t('New Bill', 'नविन बिल'), permission: 'bills' },
+    { path: '/admin/bills', icon: FolderOpen, label: t('Records', 'रेकॉर्ड्स'), permission: 'records' },
+    { path: '/admin/super', icon: Users, label: t('Control Panel', 'नियंत्रण पॅनेल'), permission: '__super_only__' },
+    { path: '/admin/settings', icon: Settings, label: t('Settings', 'सेटिंग्ज'), permission: 'settings' },
+  ].filter(item => item.permission === '__super_only__' ? admin.role === 'super_admin' : hasPermission(item.permission));
 
   const handleLogout = () => {
     logout();

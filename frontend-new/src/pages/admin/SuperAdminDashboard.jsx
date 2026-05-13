@@ -164,10 +164,50 @@ const SuperAdminDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Service Toggles */}
+                  {/* Feature Access Toggles */}
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <label className="block text-sm font-bold maroon-text mb-3">Feature Access (Toggle what this user can do)</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {[
+                        { key: 'dashboard', label: 'Dashboard', desc: 'View stats' },
+                        { key: 'calendar', label: 'Calendar', desc: 'Book dates' },
+                        { key: 'hall_settings', label: 'Hall Settings', desc: 'Edit hall info' },
+                        { key: 'services', label: 'Services', desc: 'Manage services' },
+                        { key: 'packages', label: 'Packages', desc: 'Manage packages' },
+                        { key: 'events', label: 'Event Mgmt', desc: 'Manage events' },
+                        { key: 'bills', label: 'Bills', desc: 'Generate bills' },
+                        { key: 'records', label: 'Records', desc: 'View bill history' },
+                      ].map(feat => (
+                        <label key={feat.key} className="flex items-start gap-2 p-3 bg-white rounded-lg border hover:border-blue-400 cursor-pointer transition-colors">
+                          <input
+                            type="checkbox"
+                            className="mt-1"
+                            checked={formData.permissions.includes(feat.key) || formData.permissions.includes('*')}
+                            disabled={formData.permissions.includes('*') && feat.key !== '*'}
+                            onChange={e => {
+                              let up = formData.permissions.filter(p => p !== '*');
+                              if (e.target.checked) up.push(feat.key); else up = up.filter(p => p !== feat.key);
+                              setFormData({...formData, permissions: up});
+                            }}
+                          />
+                          <div>
+                            <span className="text-sm font-semibold block">{feat.label}</span>
+                            <span className="text-[10px] text-gray-400">{feat.desc}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    <label className="flex items-center gap-2 mt-3 pt-2 border-t cursor-pointer">
+                      <input type="checkbox" checked={formData.permissions.includes('*')}
+                        onChange={e => setFormData({...formData, permissions: e.target.checked ? ['*'] : []})} />
+                      <span className="text-sm font-bold text-green-700">Grant ALL features</span>
+                    </label>
+                  </div>
+
+                  {/* Hall Service Toggles (for bill service filtering) */}
                   {formData.hall_id && hallServices.length > 0 && (
                     <div className="p-4 bg-gray-50 rounded-lg border">
-                      <label className="block text-sm font-bold maroon-text mb-3">Allowed Services (Toggle)</label>
+                      <label className="block text-sm font-bold maroon-text mb-3">Allowed Bill Services (which services appear in bills)</label>
                       <label className="flex items-center gap-2 mb-3 pb-2 border-b cursor-pointer">
                         <input type="checkbox" checked={formData.allowed_services.includes("*")}
                           onChange={e => setFormData({...formData, allowed_services: e.target.checked ? ["*"] : []})} />
@@ -204,7 +244,7 @@ const SuperAdminDashboard = () => {
                     <th className="px-4 py-3 text-left">Username</th>
                     <th className="px-4 py-3 text-left">Hall</th>
                     <th className="px-4 py-3 text-left">Role</th>
-                    <th className="px-4 py-3 text-left">Services</th>
+                    <th className="px-4 py-3 text-left">Features</th>
                     <th className="px-4 py-3 text-left">Last Login</th>
                     <th className="px-4 py-3 text-center">Actions</th>
                   </tr>
@@ -220,7 +260,7 @@ const SuperAdminDashboard = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
-                        {a.allowed_services?.includes("*") ? <span className="text-green-600 font-bold">All</span> : `${(a.allowed_services || []).length} selected`}
+                        {(a.permissions || []).includes("*") ? <span className="text-green-600 font-bold">All</span> : (a.permissions || []).length > 0 ? <span>{(a.permissions || []).join(', ')}</span> : <span className="text-red-400">None</span>}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">{a.last_login ? new Date(a.last_login).toLocaleString() : '—'}</td>
                       <td className="px-4 py-3 text-center">

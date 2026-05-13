@@ -621,6 +621,14 @@ async def startup_event():
         )
         await db.admins.insert_one(admin1.model_dump())
         logger.info("Created default super admin: om_admin / om123")
+    else:
+        # Migration: ensure om_admin always has super_admin role
+        if admin1_exists.get("role") != "super_admin":
+            await db.admins.update_one(
+                {"username": "om_admin"},
+                {"$set": {"role": "super_admin", "permissions": ["*"], "allowed_services": ["*"]}}
+            )
+            logger.info("Migrated om_admin to super_admin role")
     
     if not admin2_exists:
         admin2 = Admin(
@@ -631,6 +639,21 @@ async def startup_event():
         )
         await db.admins.insert_one(admin2.model_dump())
         logger.info("Created default admin: shiv_admin / shiv123")
+
+    # Create super_admin account
+    super_admin_exists = await db.admins.find_one({"username": "super_admin"})
+    if not super_admin_exists:
+        super_adm = Admin(
+            username="super_admin",
+            password_hash=hash_password("om@100"),
+            hall_name=om_hall["name"] if om_hall else "Om Lawns Banquet Hall",
+            hall_id=om_hall["id"] if om_hall else "",
+            role="super_admin",
+            permissions=["*"],
+            allowed_services=["*"]
+        )
+        await db.admins.insert_one(super_adm.model_dump())
+        logger.info("Created super admin: super_admin")
 
     # Migration: backfill hall_id for existing admins that don't have it
     all_halls = await db.halls.find({}, {"_id": 0}).to_list(100)
