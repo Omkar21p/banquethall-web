@@ -22,6 +22,7 @@ import OlderBookings from './pages/admin/OlderBookings';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminUsers from './pages/admin/AdminUsers';
 import EventManager from './pages/admin/EventManager';
+import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
 
 import './App.css';
 
@@ -47,6 +48,13 @@ function App() {
             <Route path="/admin/dashboard" element={
               <ProtectedRoute allowedRoles={['super_admin', 'admin', 'booking_staff']}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+
+            {/* Super Admin Control Panel */}
+            <Route path="/admin/super" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <SuperAdminDashboard />
               </ProtectedRoute>
             } />
 

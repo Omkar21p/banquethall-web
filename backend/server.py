@@ -188,6 +188,12 @@ async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(
         raise HTTPException(status_code=401, detail="Admin not found")
     return admin
 
+def require_role(admin: dict, allowed_roles: list):
+    """Helper to enforce role-based access. Raises 403 if admin's role is not in allowed_roles."""
+    role = admin.get("role", "admin")
+    if role not in allowed_roles:
+        raise HTTPException(status_code=403, detail=f"Access denied. Required role: {', '.join(allowed_roles)}")
+
 @api_router.post("/auth/login")
 async def login(admin_login: AdminLogin):
     admin = await db.admins.find_one({"username": admin_login.username}, {"_id": 0})
@@ -223,11 +229,13 @@ async def change_password(change_pwd: ChangePassword, admin=Depends(get_current_
 
 @api_router.get("/admins", response_model=List[AdminResponse])
 async def get_admins(admin=Depends(get_current_admin)):
+    require_role(admin, ["super_admin"])
     admins = await db.admins.find({}, {"_id": 0, "password_hash": 0}).to_list(100)
     return admins
 
 @api_router.post("/admins")
 async def create_admin(admin_data: dict, admin=Depends(get_current_admin)):
+    require_role(admin, ["super_admin"])
     existing = await db.admins.find_one({"username": admin_data["username"]})
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
@@ -280,6 +288,7 @@ async def reset_admin_password(admin_id: str, data: dict, admin=Depends(get_curr
 
 @api_router.delete("/admins/{admin_id}")
 async def delete_admin(admin_id: str, admin=Depends(get_current_admin)):
+    require_role(admin, ["super_admin"])
     if admin_id == admin["id"]:
         raise HTTPException(status_code=400, detail="Cannot delete your own account")
     
@@ -329,6 +338,7 @@ async def get_services(hall_id: Optional[str] = None):
 
 @api_router.post("/services", response_model=Service)
 async def create_service(service: Service, admin=Depends(get_current_admin)):
+    require_role(admin, ["super_admin", "admin"])
     await db.services.insert_one(service.model_dump())
     return service
 
@@ -339,6 +349,7 @@ async def update_service(service_id: str, service: Service, admin=Depends(get_cu
 
 @api_router.delete("/services/{service_id}")
 async def delete_service(service_id: str, admin=Depends(get_current_admin)):
+    require_role(admin, ["super_admin", "admin"])
     await db.services.delete_one({"id": service_id})
     return {"message": "Service deleted successfully"}
 
@@ -350,6 +361,7 @@ async def get_packages(hall_id: Optional[str] = None):
 
 @api_router.post("/packages", response_model=Package)
 async def create_package(package: Package, admin=Depends(get_current_admin)):
+    require_role(admin, ["super_admin", "admin"])
     await db.packages.insert_one(package.model_dump())
     return package
 
@@ -360,6 +372,7 @@ async def update_package(package_id: str, package: Package, admin=Depends(get_cu
 
 @api_router.delete("/packages/{package_id}")
 async def delete_package(package_id: str, admin=Depends(get_current_admin)):
+    require_role(admin, ["super_admin", "admin"])
     await db.packages.delete_one({"id": package_id})
     return {"message": "Package deleted successfully"}
 
@@ -424,6 +437,7 @@ async def get_bills(hall_id: Optional[str] = None, admin=Depends(get_current_adm
 
 @api_router.post("/bills", response_model=Bill)
 async def create_bill(bill: Bill, admin=Depends(get_current_admin)):
+    require_role(admin, ["super_admin", "admin"])
     doc = bill.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
     await db.bills.insert_one(doc)
@@ -438,6 +452,7 @@ async def update_bill(bill_id: str, bill: Bill, admin=Depends(get_current_admin)
 
 @api_router.delete("/bills/{bill_id}")
 async def delete_bill(bill_id: str, admin=Depends(get_current_admin)):
+    require_role(admin, ["super_admin", "admin"])
     await db.bills.delete_one({"id": bill_id})
     return {"message": "Bill deleted successfully"}
 
@@ -457,10 +472,74 @@ async def update_settings(settings: Settings, admin=Depends(get_current_admin)):
 
 @api_router.post("/reset-system")
 async def reset_system(admin=Depends(get_current_admin)):
+    require_role(admin, ["super_admin"])
     # Delete all bookings and bills
     await db.bookings.delete_many({})
     await db.bills.delete_many({})
     return {"message": "System reset successfully"}
+
+@api_router.post("/data/export")
+async def export_data(data: dict, admin=Depends(get_current_admin)):
+    """Export bookings and bills for a date range. Super admin only."""
+    require_role(admin, ["super_admin"])
+    from_date = data.get("from_date", "")
+    to_date = data.get("to_date", "")
+    
+    # Build query for bookings (uses 'date' field as string YYYY-MM-DD)
+    booking_query = {}
+    bill_query = {}
+    if from_date and to_date:
+        booking_query["date"] = {"$gte": from_date, "$lte": to_date}
+        bill_query["event_date"] = {"$gte": from_date, "$lte": to_date}
+    elif from_date:
+        booking_query["date"] = {"$gte": from_date}
+        bill_query["event_date"] = {"$gte": from_date}
+    elif to_date:
+        booking_query["date"] = {"$lte": to_date}
+        bill_query["event_date"] = {"$lte": to_date}
+    
+    bookings = await db.bookings.find(booking_query, {"_id": 0}).to_list(10000)
+    bills = await db.bills.find(bill_query, {"_id": 0}).to_list(10000)
+    
+    # Convert datetime objects to string for JSON serialization
+    for b in bookings:
+        if isinstance(b.get('booking_date'), datetime):
+            b['booking_date'] = b['booking_date'].isoformat()
+    for b in bills:
+        if isinstance(b.get('created_at'), datetime):
+            b['created_at'] = b['created_at'].isoformat()
+    
+    return {
+        "bookings": bookings,
+        "bills": bills,
+        "count": {"bookings": len(bookings), "bills": len(bills)},
+        "range": {"from": from_date, "to": to_date}
+    }
+
+@api_router.post("/data/purge")
+async def purge_data(data: dict, admin=Depends(get_current_admin)):
+    """Permanently delete bookings and bills for a date range. Super admin only."""
+    require_role(admin, ["super_admin"])
+    from_date = data.get("from_date", "")
+    to_date = data.get("to_date", "")
+    
+    if not from_date or not to_date:
+        raise HTTPException(status_code=400, detail="Both from_date and to_date are required")
+    
+    booking_query = {"date": {"$gte": from_date, "$lte": to_date}}
+    bill_query = {"event_date": {"$gte": from_date, "$lte": to_date}}
+    
+    booking_result = await db.bookings.delete_many(booking_query)
+    bill_result = await db.bills.delete_many(bill_query)
+    
+    return {
+        "message": "Data purged successfully",
+        "deleted": {
+            "bookings": booking_result.deleted_count,
+            "bills": bill_result.deleted_count
+        },
+        "range": {"from": from_date, "to": to_date}
+    }
 
 @api_router.post("/upload-image")
 async def upload_image(file: UploadFile = File(...), admin=Depends(get_current_admin)):
