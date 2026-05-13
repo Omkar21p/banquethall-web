@@ -54,7 +54,6 @@ const BillGeneration = () => {
     manual_balance: false,
     customized: false
   });
-  const [serviceSearch, setServiceSearch] = useState('');
 
   useEffect(() => {
     fetchHalls();
@@ -897,7 +896,7 @@ const BillGeneration = () => {
                     value={charge.amount}
                     onChange={(e) => {
                       const updated = [...billData.custom_charges];
-                      updated[idx] = { ...updated[idx], amount: parseInt(e.target.value) || 0 };
+                    updated[idx] = { ...updated[idx], amount: parseInt(e.target.value) || 0 };
                       setBillData({ ...billData, custom_charges: updated });
                     }}
                     onWheel={(e) => e.target.blur()}
@@ -945,61 +944,25 @@ const BillGeneration = () => {
             <div className="mt-6">
               <h3 className="playfair text-xl font-bold maroon-text mb-3">{t('Add Services', 'सेवा जोडा')}</h3>
               <div className="relative mb-4">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder={t('Search service to add...', 'सेवा शोधण्यासाठी टाईप करा...')}
-                    className="flex-1 px-4 py-2 border-2 border-[#D4AF37] rounded-lg"
-                    value={serviceSearch}
-                    onChange={(e) => setServiceSearch(e.target.value)}
-                    data-testid="service-search-input"
-                  />
-                  {serviceSearch && (
-                    <button 
-                      onClick={() => setServiceSearch('')}
-                      className="p-2 text-gray-500 hover:text-red-500"
-                    >
-                      <X size={20} />
-                    </button>
-                  )}
-                </div>
-                
-                {serviceSearch && (
-                  <div className="absolute z-10 w-full bg-white border-2 border-[#D4AF37] rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto">
-                    {(services || [])
-                      .filter(s => s && s.id && !billData.services?.find(bs => bs && bs.id === s.id))
-                      .filter(s => 
-                        (s.name || '').toLowerCase().includes((serviceSearch || '').toLowerCase()) || 
-                        (s.name_mr || '').toLowerCase().includes((serviceSearch || '').toLowerCase())
-                      )
-                      .map(service => (
-                        <div
-                          key={service.id}
-                          className="px-4 py-3 hover:bg-red-50 cursor-pointer border-b border-gray-100 flex justify-between items-center"
-                          onClick={() => {
-                            addService(service.id);
-                            setServiceSearch('');
-                          }}
-                        >
-                          <div>
-                            <span className="font-bold maroon-text">{language === 'en' ? (service.name || '') : (service.name_mr || '')}</span>
-                            <p className="text-xs text-gray-500">{service.description || ''}</p>
-                          </div>
-                          <span className="text-[#D4AF37] font-bold">₹{service.price}</span>
-                        </div>
-                      ))}
-                    {(services || [])
-                      .filter(s => s && s.id && !billData.services?.find(bs => bs && bs.id === s.id))
-                      .filter(s => 
-                        (s.name || '').toLowerCase().includes((serviceSearch || '').toLowerCase()) || 
-                        (s.name_mr || '').toLowerCase().includes((serviceSearch || '').toLowerCase())
-                      ).length === 0 && (
-                      <div className="px-4 py-3 text-gray-500 text-center">
-                        {t('No matching services found', 'कोणतीही जुळणारी सेवा आढळली नाही')}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <select
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      addService(e.target.value);
+                      e.target.value = "";
+                    }
+                  }}
+                  className="w-full px-4 py-2 border-2 border-[#D4AF37] rounded-lg bg-white"
+                  defaultValue=""
+                >
+                  <option value="">{t('Select service to add...', 'सेवा निवडा...')}</option>
+                  {(services || [])
+                    .filter(s => !billData.services?.find(bs => bs.id === s.id))
+                    .map(service => (
+                      <option key={service.id} value={service.id}>
+                        {language === 'en' ? (service.name || '') : (service.name_mr || '')} - ₹{service.price}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               {billData.services.length > 0 && (
