@@ -1,0 +1,8 @@
+{
+  "name": "banquethall-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "cd frontend-new && npm install && npm run build"
+  }
+}
