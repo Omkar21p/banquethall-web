@@ -88,86 +88,85 @@ const AdminDashboard = () => {
     <AdminLayout>
       <div className="space-y-8">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statCards.map((stat, idx) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={idx}
-                className="bg-white p-6 rounded-xl shadow-md border border-[#D4AF37]/20"
-                data-testid={`stat-card-${idx}`}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg ${stat.color}`}>
-                    <Icon size={24} className="text-white" />
+          {statCards
+            .filter(card => admin.role === 'super_admin' || admin.role === 'admin' || (admin.role === 'booking_staff' && card.label !== t('Total Revenue', 'कुल उत्पन्न')))
+            .map((stat, idx) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={idx}
+                  className="bg-white p-6 rounded-xl shadow-md border border-[#D4AF37]/20"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-lg ${stat.color}`}>
+                      <Icon size={24} className="text-white" />
+                    </div>
                   </div>
+                  <p className="text-gray-600 text-sm mb-1">{stat.label}</p>
+                  <p className="text-2xl font-bold maroon-text">{stat.value}</p>
                 </div>
-                <p className="text-gray-600 text-sm mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold maroon-text">{stat.value}</p>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
 
-        <div className="bg-white p-8 rounded-xl shadow-md">
-          <h3 className="playfair text-2xl font-bold maroon-text mb-4">
-            {t('Quick Actions', 'छोटी क्रिया')}
-          </h3>
-          <div className="grid md:grid-cols-3 gap-4">
-            <a
-              href="/admin/bills/new"
-              className="p-4 border-2 border-[#D4AF37] rounded-lg hover:bg-[#D4AF37] hover:text-white transition-all text-center"
-              data-testid="quick-new-bill-btn"
-            >
-              <FileText size={32} className="mx-auto mb-2" />
-              <p className="font-semibold">{t('Generate New Bill', 'नवीन बिल तयार करा')}</p>
-            </a>
-            <a
-              href="/admin/calendar"
-              className="p-4 border-2 border-[#D4AF37] rounded-lg hover:bg-[#D4AF37] hover:text-white transition-all text-center"
-              data-testid="quick-calendar-btn"
-            >
-              <Calendar size={32} className="mx-auto mb-2" />
-              <p className="font-semibold">{t('Manage Calendar', 'कॅलेंडर व्यवस्थापित करा')}</p>
-            </a>
-            <a
-              href="/admin/bills"
-              className="p-4 border-2 border-[#D4AF37] rounded-lg hover:bg-[#D4AF37] hover:text-white transition-all text-center"
-              data-testid="quick-older-bookings-btn"
-            >
-              <FolderOpen size={32} className="mx-auto mb-2" />
-              <p className="font-semibold">{t('View Older Bookings', 'जुनी बुकिंग पहा')}</p>
-            </a>
+        {admin.role !== 'booking_staff' && (
+          <div className="bg-white p-8 rounded-xl shadow-md">
+            <h3 className="playfair text-2xl font-bold maroon-text mb-4">
+              {t('Quick Actions', 'छोटी क्रिया')}
+            </h3>
+            <div className="grid md:grid-cols-3 gap-4">
+              <a
+                href="/admin/bills/new"
+                className="p-4 border-2 border-[#D4AF37] rounded-lg hover:bg-[#D4AF37] hover:text-white transition-all text-center"
+              >
+                <FileText size={32} className="mx-auto mb-2" />
+                <p className="font-semibold">{t('Generate New Bill', 'नवीन बिल तयार करा')}</p>
+              </a>
+              <a
+                href="/admin/calendar"
+                className="p-4 border-2 border-[#D4AF37] rounded-lg hover:bg-[#D4AF37] hover:text-white transition-all text-center"
+              >
+                <Calendar size={32} className="mx-auto mb-2" />
+                <p className="font-semibold">{t('Manage Calendar', 'कॅलेंडर व्यवस्थापित करा')}</p>
+              </a>
+              <a
+                href="/admin/bills"
+                className="p-4 border-2 border-[#D4AF37] rounded-lg hover:bg-[#D4AF37] hover:text-white transition-all text-center"
+              >
+                <FolderOpen size={32} className="mx-auto mb-2" />
+                <p className="font-semibold">{t('View Older Bookings', 'जुनी बुकिंग पहा')}</p>
+              </a>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Reset System Section */}
-      <div className="bg-red-50 border border-red-200 p-8 rounded-xl shadow-md mt-8">
-        <h3 className="playfair text-xl font-bold text-red-800 mb-2">{t('Danger Zone', 'धोकादायक क्षेत्र')}</h3>
-        <p className="text-sm text-red-600 mb-4">
-          {t('Reset the system by clearing all bookings and bills. This action cannot be undone.', 'सर्व बुकिंग आणि बिले साफ करून सिस्टम रीसेट करा. ही कृती पूर्ववत केली जाऊ शकत नाही.')}
-        </p>
-        <button
-          onClick={() => {
-            if (window.confirm(t('Are you sure you want to delete ALL data? This action is permanent.', 'तुम्हाला खात्री आहे का की तुम्ही सर्व डेटा हटवू इच्छिता? ही कृती कायमस्वरूपी आहे.'))) {
-              if (window.confirm(t('Please confirm again. Type OK to proceed.', 'कृपया पुन्हा पुष्टी करा.'))) {
-                // Logic to delete all data
-                // Since we don't have a direct 'reset' endpoint, we might need to implement one or iterate.
-                // For now, I'll show a toast as we need backend support for a safe clean reset.
-                axios.post(`${API}/reset-system`, {}, getAuthHeaders())
-                  .then(() => {
-                    fetchStats();
-                    alert('System reset successfully.');
-                  })
-                  .catch(() => alert('Reset feature requires backend/admin privileges.'));
+      {/* Reset System Section - ONLY for Super Admin */}
+      {admin.role === 'super_admin' && (
+        <div className="bg-red-50 border border-red-200 p-8 rounded-xl shadow-md mt-8">
+          <h3 className="playfair text-xl font-bold text-red-800 mb-2">{t('Danger Zone', 'धोकादायक क्षेत्र')}</h3>
+          <p className="text-sm text-red-600 mb-4">
+            {t('Reset the system by clearing all bookings and bills. This action cannot be undone.', 'सर्व बुकिंग आणि बिले साफ करून सिस्टम रीसेट करा. ही कृती पूर्ववत केली जाऊ शकत नाही.')}
+          </p>
+          <button
+            onClick={() => {
+              if (window.confirm(t('Are you sure you want to delete ALL data? This action is permanent.', 'तुम्हाला खात्री आहे का की तुम्ही सर्व डेटा हटवू इच्छिता? ही कृती कायमस्वरूपी आहे.'))) {
+                if (window.confirm(t('Please confirm again. Type OK to proceed.', 'कृपया पुन्हा पुष्टी करा.'))) {
+                  axios.post(`${API}/reset-system`, {}, getAuthHeaders())
+                    .then(() => {
+                      fetchStats();
+                      alert('System reset successfully.');
+                    })
+                    .catch(() => alert('Reset feature requires backend/admin privileges.'));
+                }
               }
-            }
-          }}
-          className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold"
-        >
-          {t('Reset Everything', 'सर्वकाही रीसेट करा')}
-        </button>
-      </div>
+            }}
+            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold"
+          >
+            {t('Reset Everything', 'सर्वकाही रीसेट करा')}
+          </button>
+        </div>
+      )}
     </AdminLayout >
   );
 };
