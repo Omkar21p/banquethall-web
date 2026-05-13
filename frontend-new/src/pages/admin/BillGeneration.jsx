@@ -966,11 +966,11 @@ const BillGeneration = () => {
                 
                 {serviceSearch && (
                   <div className="absolute z-10 w-full bg-white border-2 border-[#D4AF37] rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto">
-                    {services
-                      .filter(s => !billData.services.find(bs => bs.id === s.id))
+                    {(services || [])
+                      .filter(s => s && s.id && !billData.services?.find(bs => bs && bs.id === s.id))
                       .filter(s => 
-                        s.name?.toLowerCase().includes(serviceSearch.toLowerCase()) || 
-                        s.name_mr?.toLowerCase().includes(serviceSearch.toLowerCase())
+                        (s.name || '').toLowerCase().includes((serviceSearch || '').toLowerCase()) || 
+                        (s.name_mr || '').toLowerCase().includes((serviceSearch || '').toLowerCase())
                       )
                       .map(service => (
                         <div
@@ -982,17 +982,17 @@ const BillGeneration = () => {
                           }}
                         >
                           <div>
-                            <span className="font-bold maroon-text">{language === 'en' ? service.name : service.name_mr}</span>
+                            <span className="font-bold maroon-text">{language === 'en' ? (service.name || '') : (service.name_mr || '')}</span>
                             <p className="text-xs text-gray-500">{service.description || ''}</p>
                           </div>
                           <span className="text-[#D4AF37] font-bold">₹{service.price}</span>
                         </div>
                       ))}
-                    {services
-                      .filter(s => !billData.services.find(bs => bs.id === s.id))
+                    {(services || [])
+                      .filter(s => s && s.id && !billData.services?.find(bs => bs && bs.id === s.id))
                       .filter(s => 
-                        s.name.toLowerCase().includes(serviceSearch.toLowerCase()) || 
-                        s.name_mr?.toLowerCase().includes(serviceSearch.toLowerCase())
+                        (s.name || '').toLowerCase().includes((serviceSearch || '').toLowerCase()) || 
+                        (s.name_mr || '').toLowerCase().includes((serviceSearch || '').toLowerCase())
                       ).length === 0 && (
                       <div className="px-4 py-3 text-gray-500 text-center">
                         {t('No matching services found', 'कोणतीही जुळणारी सेवा आढळली नाही')}
