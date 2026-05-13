@@ -3,7 +3,8 @@ import AdminLayout from '../../components/AdminLayout';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import axios from 'axios';
-import { Plus, Trash2, Save, X } from 'lucide-react';
+import { Plus, Trash2, Save, X, Key, Edit2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -28,13 +29,37 @@ const AdminUsers = () => {
     password: '',
     hall_id: '',
     role: 'admin',
-    permissions: []
+    permissions: [],
+    allowed_services: ["*"]
   });
+  const [editingAdminId, setEditingAdminId] = useState(null);
+  const [hallServices, setHallServices] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(false);
 
   useEffect(() => {
     fetchAdmins();
     fetchHalls();
   }, []);
+
+  useEffect(() => {
+    if (formData.hall_id) {
+      fetchHallServices(formData.hall_id);
+    } else {
+      setHallServices([]);
+    }
+  }, [formData.hall_id]);
+
+  const fetchHallServices = async (hallId) => {
+    try {
+      setLoadingServices(true);
+      const response = await axios.get(`${API}/services?hall_id=${hallId}`);
+      setHallServices(response.data);
+      setLoadingServices(false);
+    } catch (error) {
+      console.error('Error fetching hall services:', error);
+      setLoadingServices(false);
+    }
+  };
 
   const fetchAdmins = async () => {
     try {
@@ -58,18 +83,52 @@ const AdminUsers = () => {
     e.preventDefault();
     try {
       const selectedHall = halls.find(h => h.id === formData.hall_id);
-      await axios.post(`${API}/admins`, {
+      const data = {
         ...formData,
         hall_name: selectedHall?.name || '',
         hall_id: formData.hall_id
-      }, getAuthHeaders());
-      toast.success(t('Admin added successfully!', 'प्रशासक यशस्वीपणे जोडला!'));
-      setFormData({ username: '', password: '', hall_id: '', role: 'admin', permissions: [] });
+      };
+
+      if (editingAdminId) {
+        await axios.put(`${API}/admins/${editingAdminId}`, data, getAuthHeaders());
+        toast.success(t('Admin updated successfully!', 'प्रशासक यशस्वीपणे अपडेट केला!'));
+      } else {
+        await axios.post(`${API}/admins`, data, getAuthHeaders());
+        toast.success(t('Admin added successfully!', 'प्रशासक यशस्वीपणे जोडला!'));
+      }
+
+      setFormData({ username: '', password: '', hall_id: '', role: 'admin', permissions: [], allowed_services: ["*"] });
       setShowAddForm(false);
+      setEditingAdminId(null);
       fetchAdmins();
     } catch (error) {
-      toast.error(error.response?.data?.detail || t('Error adding admin', 'प्रशासक जोडताना एरर'));
+      toast.error(error.response?.data?.detail || t('Error saving admin', 'प्रशासक जतन करताना एरर'));
     }
+  };
+
+  const handleResetPassword = async (adminId) => {
+    const newPassword = window.prompt(t('Enter new password:', 'नवीन पासवर्ड टाका:'));
+    if (!newPassword) return;
+
+    try {
+      await axios.put(`${API}/admins/${adminId}/reset-password`, { new_password: newPassword }, getAuthHeaders());
+      toast.success(t('Password reset successfully!', 'पासवर्ड यशस्वीपणे रिसेट झाला!'));
+    } catch (error) {
+      toast.error(t('Error resetting password', 'पासवर्ड रिसेट करताना एरर'));
+    }
+  };
+
+  const handleEdit = (adm) => {
+    setFormData({
+      username: adm.username,
+      password: '', // Don't show old password
+      hall_id: adm.hall_id || '',
+      role: adm.role || 'admin',
+      permissions: adm.permissions || [],
+      allowed_services: adm.allowed_services || ["*"]
+    });
+    setEditingAdminId(adm.id);
+    setShowAddForm(true);
   };
 
   const handleDelete = async (id, username) => {
@@ -92,7 +151,11 @@ const AdminUsers = () => {
             {t('Admin User Management', 'प्रशासक व्यवस्थापन')}
           </h2>
           <button
-            onClick={() => setShowAddForm(true)}
+            onClick={() => {
+              setEditingAdminId(null);
+              setFormData({ username: '', password: '', hall_id: '', role: 'admin', permissions: [], allowed_services: ["*"] });
+              setShowAddForm(true);
+            }}
             className="flex items-center gap-2 px-6 py-3 bg-[#800000] text-white rounded-full hover:bg-[#600000] transition-all"
             data-testid="add-admin-btn"
           >
@@ -105,7 +168,7 @@ const AdminUsers = () => {
           <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-[#D4AF37]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="playfair text-xl font-bold maroon-text">
-                {t('Add New Admin', 'नवीन प्रशासक जोडा')}
+                {editingAdminId ? t('Edit Admin', 'प्रशासक संपादित करा') : t('Add New Admin', 'नवीन प्रशासक जोडा')}
               </h3>
               <button onClick={() => setShowAddForm(false)} className="text-gray-500 hover:text-gray-700">
                 <X size={24} />
@@ -130,7 +193,8 @@ const AdminUsers = () => {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="w-full px-4 py-2 border rounded-lg"
-                  required
+                  required={!editingAdminId}
+                  placeholder={editingAdminId ? t('Leave blank to keep current', 'चालू ठेवण्यासाठी रिक्त सोडा') : ''}
                   data-testid="admin-password-input"
                 />
               </div>
@@ -162,6 +226,43 @@ const AdminUsers = () => {
                   <option value="booking_staff">Booking Staff (Calendar Only)</option>
                 </select>
               </div>
+
+              {formData.hall_id && hallServices.length > 0 && (
+                <div className="p-4 bg-gray-50 rounded-lg border">
+                  <label className="block text-sm font-bold maroon-text mb-3">{t('Allowed Services', 'अनुमत सेवा')}</label>
+                  <div className="flex items-center gap-4 mb-4 pb-2 border-b">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.allowed_services.includes("*")}
+                        onChange={(e) => {
+                          if (e.target.checked) setFormData({ ...formData, allowed_services: ["*"] });
+                          else setFormData({ ...formData, allowed_services: [] });
+                        }}
+                      />
+                      <span className="text-sm font-semibold">{t('All Services', 'सर्व सेवा')}</span>
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {hallServices.map(service => (
+                      <label key={service.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
+                        <input 
+                          type="checkbox" 
+                          disabled={formData.allowed_services.includes("*")}
+                          checked={formData.allowed_services.includes("*") || formData.allowed_services.includes(service.id)}
+                          onChange={(e) => {
+                            let updated = [...formData.allowed_services.filter(id => id !== "*")];
+                            if (e.target.checked) updated.push(service.id);
+                            else updated = updated.filter(id => id !== service.id);
+                            setFormData({ ...formData, allowed_services: updated });
+                          }}
+                        />
+                        <span className="text-xs">{language === 'en' ? service.name : service.name_mr}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
               <button
                 type="submit"
                 className="flex items-center gap-2 px-6 py-2 bg-[#800000] text-white rounded-full hover:bg-[#600000]"
@@ -181,6 +282,7 @@ const AdminUsers = () => {
                 <th className="px-6 py-3 text-left">{t('Username', 'वापरकर्ता नाव')}</th>
                 <th className="px-6 py-3 text-left">{t('Hall Name', 'हॉल नाव')}</th>
                 <th className="px-6 py-3 text-left">{t('Role', 'भूमिका')}</th>
+                <th className="px-6 py-3 text-left">{t('Last Login', 'शेवटचे लॉगिन')}</th>
                 <th className="px-6 py-3 text-left">{t('Created', 'तयार केले')}</th>
                 <th className="px-6 py-3 text-center">{t('Actions', 'कृती')}</th>
               </tr>
@@ -199,15 +301,34 @@ const AdminUsers = () => {
                       {admin.role}
                     </span>
                   </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {admin.last_login ? new Date(admin.last_login).toLocaleString() : '-'}
+                  </td>
                   <td className="px-6 py-4">{new Date(admin.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-4 text-center">
-                    <button
-                      onClick={() => handleDelete(admin.id, admin.username)}
-                      className="p-2 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors"
-                      data-testid={`delete-admin-${admin.id}`}
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    <div className="flex justify-center gap-2">
+                      <button
+                        onClick={() => handleEdit(admin)}
+                        className="p-2 text-blue-500 hover:bg-blue-500 hover:text-white rounded-lg transition-colors"
+                        title={t('Edit', 'संपादित करा')}
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleResetPassword(admin.id)}
+                        className="p-2 text-orange-500 hover:bg-orange-500 hover:text-white rounded-lg transition-colors"
+                        title={t('Reset Password', 'पासवर्ड रिसेट')}
+                      >
+                        <Key size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(admin.id, admin.username)}
+                        className="p-2 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-colors"
+                        title={t('Delete', 'काढून टाका')}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

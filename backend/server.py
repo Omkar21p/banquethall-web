@@ -38,6 +38,8 @@ class Admin(BaseModel):
     hall_id: Optional[str] = None
     role: str = "admin" # super_admin, admin, booking_staff
     permissions: List[str] = [] # e.g., ["view_bookings", "create_bookings", "view_bills"]
+    allowed_services: List[str] = ["*"] # List of service IDs or ["*"] for all
+    last_login: Optional[datetime] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class AdminLogin(BaseModel):
@@ -52,6 +54,8 @@ class AdminResponse(BaseModel):
     hall_id: Optional[str] = None
     role: str = "admin"
     permissions: List[str] = []
+    allowed_services: List[str] = ["*"]
+    last_login: Optional[datetime] = None
     created_at: Optional[datetime] = None
 
 class ChangePassword(BaseModel):
@@ -190,6 +194,10 @@ async def login(admin_login: AdminLogin):
     if not admin or not verify_password(admin_login.password, admin["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    # Update last login
+    now = datetime.now(timezone.utc)
+    await db.admins.update_one({"id": admin["id"]}, {"$set": {"last_login": now}})
+    
     token = create_access_token({"sub": admin["id"], "username": admin["username"]})
     return {
         "token": token,
@@ -199,7 +207,8 @@ async def login(admin_login: AdminLogin):
             "hall_name": admin["hall_name"],
             "hall_id": admin.get("hall_id", ""),
             "role": admin.get("role", "admin"),
-            "permissions": admin.get("permissions", [])
+            "permissions": admin.get("permissions", []),
+            "allowed_services": admin.get("allowed_services", ["*"])
         }
     }
 
@@ -237,7 +246,8 @@ async def create_admin(admin_data: dict, admin=Depends(get_current_admin)):
         hall_name=hall_name,
         hall_id=hall_id,
         role=admin_data.get("role", "admin"),
-        permissions=admin_data.get("permissions", [])
+        permissions=admin_data.get("permissions", []),
+        allowed_services=admin_data.get("allowed_services", ["*"])
     )
     await db.admins.insert_one(new_admin.model_dump())
     return {"message": "Admin created successfully", "id": new_admin.id}
@@ -251,10 +261,22 @@ async def update_admin_role(admin_id: str, data: dict, admin=Depends(get_current
         {"id": admin_id},
         {"$set": {
             "role": data.get("role"),
-            "permissions": data.get("permissions", [])
+            "permissions": data.get("permissions", []),
+            "allowed_services": data.get("allowed_services", ["*"]),
+            "hall_id": data.get("hall_id"),
+            "hall_name": data.get("hall_name")
         }}
     )
     return {"message": "Admin updated successfully"}
+
+@api_router.put("/admins/{admin_id}/reset-password")
+async def reset_admin_password(admin_id: str, data: dict, admin=Depends(get_current_admin)):
+    if admin.get("role") != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can reset passwords")
+    
+    new_hash = hash_password(data["new_password"])
+    await db.admins.update_one({"id": admin_id}, {"$set": {"password_hash": new_hash}})
+    return {"message": "Password reset successfully"}
 
 @api_router.delete("/admins/{admin_id}")
 async def delete_admin(admin_id: str, admin=Depends(get_current_admin)):
@@ -264,6 +286,19 @@ async def delete_admin(admin_id: str, admin=Depends(get_current_admin)):
     await db.admins.delete_one({"id": admin_id})
     return {"message": "Admin deleted successfully"}
 
+@api_router.post("/halls")
+async def create_hall(hall: Hall, admin=Depends(get_current_admin)):
+    if admin.get("role") != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can create halls")
+    await db.halls.insert_one(hall.model_dump())
+    return {"message": "Hall created successfully", "id": hall.id}
+
+@api_router.delete("/halls/{hall_id}")
+async def delete_hall(hall_id: str, admin=Depends(get_current_admin)):
+    if admin.get("role") != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can delete halls")
+    await db.halls.delete_one({"id": hall_id})
+    return {"message": "Hall deleted successfully"}
 @api_router.get("/halls", response_model=List[Hall])
 async def get_halls():
     halls = await db.halls.find({}, {"_id": 0}).to_list(100)

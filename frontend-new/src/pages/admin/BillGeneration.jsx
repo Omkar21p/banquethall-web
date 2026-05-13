@@ -226,7 +226,14 @@ const BillGeneration = () => {
   const fetchServices = async () => {
     try {
       const response = await axios.get(`${API}/services?hall_id=${billData.hall_id}`);
-      setServices(response.data);
+      let allServices = response.data;
+      
+      // Filter if admin has restricted services
+      if (admin && admin.allowed_services && !admin.allowed_services.includes("*")) {
+        allServices = allServices.filter(s => admin.allowed_services.includes(s.id));
+      }
+      
+      setServices(allServices);
     } catch (error) {
       console.error('Error fetching services:', error);
     }
@@ -962,7 +969,7 @@ const BillGeneration = () => {
                     {services
                       .filter(s => !billData.services.find(bs => bs.id === s.id))
                       .filter(s => 
-                        s.name.toLowerCase().includes(serviceSearch.toLowerCase()) || 
+                        s.name?.toLowerCase().includes(serviceSearch.toLowerCase()) || 
                         s.name_mr?.toLowerCase().includes(serviceSearch.toLowerCase())
                       )
                       .map(service => (

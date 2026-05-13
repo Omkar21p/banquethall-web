@@ -116,7 +116,7 @@ const HallDashboardPage = () => {
             {services.length === 0 ? (
                 <div className="text-center py-12"><p className="text-gray-600 text-lg">{t('No services available yet.', 'सध्या कोणत्याही सेवा उपलब्ध नाहीत.')}</p></div>
             ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {services.map((service) => (
                         <div key={service.id} className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all border border-[#D4AF37]/20">
                             {service.image_url && <img src={service.image_url} alt={service.name} className="w-full h-48 object-cover rounded-lg mb-4" />}
@@ -255,8 +255,8 @@ const HallDashboardPage = () => {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Horizontal Navigation Tabs */}
-                <div className="flex justify-center mb-12 overflow-x-auto hide-scrollbar">
-                    <div className="flex space-x-2 md:space-x-4 bg-white p-2 rounded-full shadow-lg border-2 border-[#D4AF37]/20 whitespace-nowrap">
+                <div className="flex justify-start md:justify-center mb-12 overflow-x-auto pb-4 px-2">
+                    <div className="flex space-x-2 md:space-x-4 bg-white p-2 rounded-full shadow-lg border-2 border-[#D4AF37]/20 whitespace-nowrap mx-auto md:mx-0">
                         <button
                             onClick={() => setActiveTab('services')}
                             className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all ${activeTab === 'services' ? 'bg-[#800000] text-white shadow-md' : 'text-gray-600 hover:bg-[#FDFBF7]'}`}

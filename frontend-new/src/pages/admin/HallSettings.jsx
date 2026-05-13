@@ -3,7 +3,7 @@ import AdminLayout from '../../components/AdminLayout';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import axios from 'axios';
-import { Save, Upload } from 'lucide-react';
+import { Save, Upload, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -26,6 +26,7 @@ const HallSettings = () => {
     description_mr: '',
     gallery_images: []
   });
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     fetchHalls();
@@ -94,8 +95,14 @@ const HallSettings = () => {
         capacity: parseInt(hallData.capacity),
         approx_rent: parseInt(hallData.approx_rent)
       };
-      await axios.put(`${API}/halls/${selectedHall}`, payload, getAuthHeaders());
-      toast.success(t('Hall settings saved!', 'हॉल सेटिंग्ज जतन झाल्या!'));
+      if (isCreating) {
+        await axios.post(`${API}/halls`, payload, getAuthHeaders());
+        toast.success(t('Hall created successfully!', 'हॉल यशस्वीपणे तयार झाला!'));
+        setIsCreating(false);
+      } else {
+        await axios.put(`${API}/halls/${selectedHall}`, payload, getAuthHeaders());
+        toast.success(t('Hall settings saved!', 'हॉल सेटिंग्ज जतन झाल्या!'));
+      }
       fetchHalls();
     } catch (error) {
       toast.error(t('Error saving settings', 'सेटिंग्ज जतन करताना एरर'));
@@ -141,28 +148,77 @@ const HallSettings = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <h2 className="playfair text-2xl font-bold maroon-text">
-          {t('Hall Settings & Logos', 'हॉल सेटिंग्ज आणि लोगो')}
-        </h2>
+        <div className="flex justify-between items-center">
+          <h2 className="playfair text-2xl font-bold maroon-text">
+            {t('Hall Settings & Management', 'हॉल सेटिंग्ज आणि व्यवस्थापन')}
+          </h2>
+          {admin?.role === 'super_admin' && !isCreating && (
+            <button
+              onClick={() => {
+                setIsCreating(true);
+                setHallData({
+                  name: '', name_mr: '', capacity: '', approx_rent: '', location: '',
+                  image_url: '', logo: '', description: '', description_mr: '', gallery_images: []
+                });
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-[#800000] text-white rounded-full hover:bg-[#600000]"
+            >
+              <Plus size={20} />
+              {t('Add New Hall', 'नवीन हॉल जोडा')}
+            </button>
+          )}
+          {isCreating && (
+            <button
+              onClick={() => setIsCreating(false)}
+              className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 rounded-full hover:bg-gray-100"
+            >
+              <X size={20} />
+              {t('Cancel', 'रद्द करा')}
+            </button>
+          )}
+        </div>
 
         <div className="bg-white p-6 rounded-xl shadow-lg">
-          <div className="mb-6">
-            <label className="block text-sm font-semibold mb-2">
-              {t('Select Hall:', 'हॉल निवडा:')}
-            </label>
-            <select
-              value={selectedHall}
-              onChange={(e) => setSelectedHall(e.target.value)}
-              className="w-full px-4 py-2 border-2 border-[#D4AF37] rounded-lg focus:outline-none"
-              data-testid="hall-select"
-            >
-              {halls.map((hall) => (
-                <option key={hall.id} value={hall.id}>
-                  {language === 'en' ? hall.name : hall.name_mr}
-                </option>
-              ))}
-            </select>
-          </div>
+          {!isCreating && (
+            <div className="mb-6 flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-sm font-semibold mb-2">
+                  {t('Select Hall:', 'हॉल निवडा:')}
+                </label>
+                <select
+                  value={selectedHall}
+                  onChange={(e) => setSelectedHall(e.target.value)}
+                  className="w-full px-4 py-2 border-2 border-[#D4AF37] rounded-lg focus:outline-none"
+                  data-testid="hall-select"
+                >
+                  {halls.map((hall) => (
+                    <option key={hall.id} value={hall.id}>
+                      {language === 'en' ? hall.name : hall.name_mr}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {admin?.role === 'super_admin' && (
+                <button
+                  onClick={async () => {
+                    if (window.confirm(t('Delete this hall and all its data?', 'हा हॉल आणि त्याचा सर्व डेटा हटवायचा?'))) {
+                      try {
+                        await axios.delete(`${API}/halls/${selectedHall}`, getAuthHeaders());
+                        toast.success(t('Hall deleted!', 'हॉल हटवला!'));
+                        fetchHalls();
+                      } catch (err) {
+                        toast.error(t('Error deleting hall', 'हॉल हटवताना एरर'));
+                      }
+                    }
+                  }}
+                  className="p-3 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                  title={t('Delete Hall', 'हॉल डिलीट करा')}
+                >
+                  <Trash2 size={20} />
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="space-y-4">
             <div>
@@ -322,11 +378,11 @@ const HallSettings = () => {
 
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-6 py-3 bg-[#800000] text-white rounded-full hover:bg-[#600000] transition-all"
+              className="flex items-center gap-2 px-8 py-3 bg-[#800000] text-white rounded-full hover:bg-[#600000] transition-all font-bold"
               data-testid="save-hall-btn"
             >
               <Save size={20} />
-              {t('Save Changes', 'बदल जतन करा')}
+              {isCreating ? t('Create Hall', 'हॉल तयार करा') : t('Save Changes', 'बदल जतन करा')}
             </button>
           </div>
         </div>
